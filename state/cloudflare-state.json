@@ -1,14 +1,7 @@
 {
   "discovered": {},
   "initialized": true,
-  "pending_available": {
-    "https://www.falabella.com/falabella-cl/product/159820121/consola-nintendo-switch-2-256gb-zelda-40-aniversario-juego-ocarina-of-time-verde": {
-      "count": 1,
-      "signature": "{\"status\":\"available\",\"price_clp\":899990,\"title\":\"Consola Switch 2 256GB Zelda 40 Aniversario + Juego Ocarina of Time - Verde\"}",
-      "first_seen_at": "2026-11-15T17:10:53.900Z",
-      "last_seen_at": "2026-11-15T17:10:53.900Z"
-    }
-  },
+  "pending_available": {},
   "retailer_discovered": {
     "https://www.falabella.com/falabella-cl/product/159555264/consola-nintendo-switch-2-256gb-the-legend-of-zelda-40-aniversario-edicion-especial": {
       "found_at": "2026-11-15T15:20:53.900Z",
@@ -136,6 +129,16 @@
         "status": "unavailable",
         "title": "Consola Switch 2 Zelda 40th Aniversario [Consola Switch 2]"
       }
+    },
+    "https://www.falabella.com/falabella-cl/product/159820121/consola-nintendo-switch-2-256gb-zelda-40-aniversario-juego-ocarina-of-time-verde": {
+      "name": "Falabella · búsqueda",
+      "snapshot": {
+        "http": 200,
+        "status": "available",
+        "price_clp": 899990,
+        "title": "Consola Switch 2 256GB Zelda 40 Aniversario + Juego Ocarina of Time - Verde"
+      },
+      "last_changed_at": "2026-11-15T17:15:53.900Z"
     }
   },
   "version": 1,
