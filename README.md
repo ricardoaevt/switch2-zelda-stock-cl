@@ -90,26 +90,47 @@ Deja `GITHUB_OWNER` y `GITHUB_REPO` en `wrangler.jsonc`.
 
 Un **Fine-grained PAT** con acceso solo a ese repositorio:
 
-- `Contents: Read and write` (guardar el estado)
+- `Contents: Read and write` (guardar el estado y disparar el workflow)
 - `Issues: Read and write` (abrir las alertas)
 
-`repository_dispatch` requiere permiso de escritura de contenidos; el mismo token sirve.
+El mismo token sirve para todo. No lo guardes en el repositorio.
 
-### 4. Desplegar el Worker
+### 4. Desplegar el Worker (desde el dashboard de Cloudflare)
 
-```bash
-npm install
-npx wrangler login
-npx wrangler secret put GITHUB_TOKEN     # pega el PAT
-npx wrangler secret put RUN_TOKEN         # opcional: habilita el disparo manual por HTTP
-npm run deploy
-```
+En **Workers & Pages → Create → Import from GitHub**:
+
+| Campo | Valor |
+|---|---|
+| Repositorio | `ricardoaevt/switch2-zelda-stock-cl` (o el tuyo) |
+| Root directory | `cloudflare` |
+| Build command | `npm install` |
+| Deploy command | `npx wrangler deploy` |
+
+Después, dentro del Worker → **Settings → Variables and Secrets**:
+
+| Nombre | Tipo | Valor |
+|---|---|---|
+| `GITHUB_TOKEN` | **Secret** | tu fine-grained PAT |
+| `RUN_TOKEN` | Secret (opcional) | habilita el disparo manual `POST /run` |
 
 El cron queda en `* * * * *` (cada minuto). Verificá que esté vivo:
 
 ```bash
 curl -s https://switch2-zelda-stock-cl.<tu-subdominio>.workers.dev/health | jq
 ```
+
+<details>
+<summary>Alternativa: desplegar desde la CLI</summary>
+
+```bash
+npm install
+npx wrangler login
+npx wrangler secret put GITHUB_TOKEN     # pega el PAT
+npm run deploy
+```
+
+Mismo resultado; el dashboard es la vía recomendada porque no necesita instalar nada en local.
+</details>
 
 ### 5. Habilitar los workflows y los secretos del repo
 
