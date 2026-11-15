@@ -9,6 +9,9 @@ import { runMonitor } from "../src/monitor-core.js";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CORE_PATH = path.join(HERE, "..", "src", "monitor-core.js");
 
+// Minuto 2: dispara el escaneo de catálogos (minuto % 2 === 0).
+const SCHEDULED_CATALOG_TIME = Date.parse("2026-01-01T00:02:00.000Z");
+
 const OWNER = "test-owner";
 const REPO = "test-repo";
 const STATE_URL = `https://api.github.com/repos/${OWNER}/${REPO}/contents/state/cloudflare-state.json`;
@@ -342,4 +345,87 @@ test("la URL de Mathogames en STORES es la vigente", async () => {
     !source.includes("2538-preventa-dia-1"),
     "no debe quedar la URL caída de Mathogames",
   );
+});
+
+// S14: fuentes muertas fuera y la tienda nueva verificada dentro.
+test("las fuentes muertas salen y entra la tienda nueva verificada", async () => {
+  const source = await readFile(CORE_PATH, "utf8");
+
+  assert.ok(
+    source.includes(
+      "https://www.imperiogamers.cl/product/preventa-nintendo-switch-2-edicion-the-legend-of-zelda",
+    ),
+    "debe vigilar Imperio Gamers (verificada: 200, preventa, $699.990)",
+  );
+  assert.ok(!source.includes("bestmart.cl/products/consola-nintendo-switch-2"), "Bestmart da 404");
+  assert.ok(!source.includes("weplay.cl"), "WePlay da 403");
+  assert.ok(!source.includes("simple.ripley.cl/tecno/nintendo/consolas"), "Ripley da 403");
+  assert.ok(!source.includes("lider.cl/browse"), "Lider no expone la consola");
+  assert.ok(!source.includes("sniper.cl/collections/todos-los-productos"), "Sniper no expone la consola");
+  assert.ok(!source.includes("web.facebook.com/p/Zona-Gamer"), "la fuente directa de Zona Gamer esta caida");
+  assert.ok(!source.includes("govern1.com/CL/Iquique"), "el espejo de Zona Gamer esta caido");
+});
+
+// S15: el escaneo de catálogos debe leer el producto del JSON embebido de la
+// página (Falabella lo publica así), no solo de los <a href>.
+test("el escaneo de catalogos encuentra la consola Zelda 40 en el JSON embebido", async () => {
+  const page = `<!doctype html>
+<html><head><title>Nintendo Switch 2</title></head>
+<body>
+<div class="card">
+  <h3>Nintendo Consola Switch 2 256GB The Legend of Zelda 40 . Version Global Original</h3>
+  <p>por pocketzonecl</p>
+  <p>$ 819.990 -20% $ 829.990</p>
+  <a href="javascript:void(0)">agregar al carro</a>
+  <p>entrega manana</p>
+</div>
+<script type="application/json">{&quot;@type&quot;:&quot;ListItem&quot;,&quot;item&quot;:{&quot;@type&quot;:&quot;Product&quot;,&quot;name&quot;:&quot;Consola Switch 2 256GB The Legend of Zelda 40 . Version Global Original&quot;,&quot;url&quot;:&quot;https://www.falabella.com/falabella-cl/product/159555264/consola-nintendo-switch-2-256gb-the-legend-of-zelda-40-aniversario-edicion-especial&quot;}}</script>
+</body></html>`;
+
+  const originalFetch = globalThis.fetch;
+
+  // Primera lectura: el candidato queda pendiente de confirmacion.
+  const first = makeFetch({ page });
+  globalThis.fetch = first.stub;
+
+  let state1;
+  let url;
+  try {
+    const result = await runMonitor(ENV, SCHEDULED_CATALOG_TIME, false);
+
+    assert.match(
+      String(result.retailer_catalogs),
+      /Falabella:candidate_/,
+      "el catalogo debe reportar un candidato leido del JSON embebido",
+    );
+
+    state1 = decodeSavedState(first.calls.statePuts[0]);
+    url = Object.keys(state1.retailer_discovered || {}).find((u) =>
+      u.includes("159555264"),
+    );
+    assert.ok(url, "debe registrar la consola descubierta en el catalogo");
+    assert.ok(
+      state1.pending_available[url],
+      "la primera lectura debe quedar pendiente de confirmacion",
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  // Segunda lectura: confirma el stock y abre el Issue.
+  const second = makeFetch({ state: state1, page });
+  globalThis.fetch = second.stub;
+
+  try {
+    await runMonitor(ENV, SCHEDULED_CATALOG_TIME, false);
+
+    assert.equal(second.calls.issues.length, 1, "la segunda lectura debe abrir el Issue");
+
+    const state2 = decodeSavedState(second.calls.statePuts[0]);
+    const snapshot = state2.stores[url].snapshot;
+    assert.equal(snapshot.status, "available", "el boton de compra debe interpretarse como stock");
+    assert.equal(snapshot.price_clp, 819990, "el precio debe salir del bloque del producto");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });

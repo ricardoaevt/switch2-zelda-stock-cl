@@ -339,6 +339,27 @@ estado **solo cuando cambia** (medido: 4 commits de estado en 12 corridas). Si c
 
 ---
 
+### 7.1 Auditoría del 15/11 y ajustes aplicados
+
+La auditoría de fuentes (URLs consultadas, HTTP real y contenido de cada página) encontró que
+varias fuentes no podían funcionar y que **Falabella tenía la consola disponible y el monitor no la veía**:
+
+| Hallazgo | Ajuste |
+|---|---|
+| **Bestmart** 404: la consola Zelda 40 ya no está en su catálogo (el suggest API de Shopify no la lista) | **Sacar de `STORES`**. Si vuelve, el descubrimiento por Bing RSS recupera la URL |
+| **WePlay** 403 en las dos URLs (anti-bot): ilegible desde CI | **Sacar de `STORES`** |
+| **Mathogames** con la URL vieja (404) | Ya corregido a la ficha vigente `2576` |
+| **Imperio Gamers** (Puerto Montt) con preventa verificada, repone por importación | **Añadida a `STORES`** |
+| **Falabella**: la consola estaba en la colección ($819.990, "agregar al carro", entrega mañana) y el monitor no la veía | El escaneo de catálogos ahora lee el **JSON embebido** de la página (Falabella no expone la ficha en un `<a href>`) y toma precio y disponibilidad del bloque visible del producto |
+| **`PURCHASE_SIGNALS` no incluía "agregar al carro"** (el texto que usa Falabella; el motor solo conocía "agregar al carrito") | **Corregido**: "agregar al carro", "añadir al carro" y "anadir al carro" ahora cuentan como señal de compra |
+| **Ripley** 403, **Lider** 14 KB (render por JS) y **Sniper** sin la consola | **Fuera de la lista de catálogos**: solo queda Falabella |
+| **Zona Gamer Iquique**: la página de Facebook responde 400 y el espejo público no resuelve | Las dos fuentes directas se retiran; queda solo el **respaldo por búsqueda web** (cada 15 min) |
+
+**Sobre Paris (marketplace):** la ficha dice "vendido por Paris" y el botón "comprar ahora" está
+presente de forma estable (10 de 10 lecturas en 40 s), pero el stock depende del vendedor: el sitio
+puede alternar entre "con stock" y "sin stock" en minutos. El monitor interpreta el botón como
+disponibilidad, así que **es la fuente con más riesgo de falso positivo** del conjunto.
+
 ## 8. Troubleshooting
 
 | Síntoma | Causa probable | Dónde mirar |

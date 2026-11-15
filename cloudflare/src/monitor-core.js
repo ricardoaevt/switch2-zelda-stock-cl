@@ -1,9 +1,5 @@
 const STORES = [
   {
-    name: "Bestmart",
-    url: "https://bestmart.cl/products/consola-nintendo-switch-2-the-legend-of-zelda-edicion-40-aniversario",
-  },
-  {
     name: "Santo Games",
     url: "https://www.santogames.cl/nintendo-switch-2-the-legend-of-zelda-40%C2%BA-aniversario",
   },
@@ -20,24 +16,25 @@ const STORES = [
     url: "https://www.todojuegos.cl/Productos/NS2/Consola-Switch-2-Zelda-40th-Aniversario/",
   },
   {
-    name: "WePlay",
-    url: "https://www.weplay.cl/preventa-consola-switch-2-the-legend-of-zelda-40th-aniversario.html",
-  },
-  {
     name: "Paris",
     url: "https://www.paris.cl/preventa-consola-nintendo-switch-2-the-legend-of-zelda-40th-aniversario-609811999.html",
+  },
+  {
+    // Repone por importacion: es de las pocas con stock fisico recurrente.
+    name: "Imperio Gamers",
+    url: "https://www.imperiogamers.cl/product/preventa-nintendo-switch-2-edicion-the-legend-of-zelda",
   },
 ];
 
 const ML_STORE_URL = "https://www.mercadolibre.cl/tienda/nintendo";
-const ZONA_GAMER_FB_URL = "https://web.facebook.com/p/Zona-Gamer-Iquique-100063732433382/";
-const ZONA_GAMER_MIRROR_URL = "https://www.govern1.com/CL/Iquique/100213088361257/Zona-Gamer-Iquique";
 
+// Solo Falabella publica la consola Zelda 40 en un catalogo legible:
+// - Ripley responde 403 (anti-bot) y no expone ficha de la consola.
+// - Lider devuelve 14 KB (render por JS) sin productos en el HTML.
+// - Sniper no tiene la consola (solo fundas y otros titulos).
+// Alli la consola se publica dentro de un JSON embebido, no en un <a href>.
 const RETAILER_WATCH_PAGES = [
   { name: "Falabella", url: "https://www.falabella.com/falabella-cl/collection/nintendo-switch-2" },
-  { name: "Ripley", url: "https://simple.ripley.cl/tecno/nintendo/consolas?s=mdco&type=catalog" },
-  { name: "Lider", url: "https://www.lider.cl/browse/tecno/videojuegos/nintendo/66849718_80980590_97449970" },
-  { name: "Sniper", url: "https://sniper.cl/collections/todos-los-productos" },
 ];
 
 const STATE_PATH = "state/cloudflare-state.json";
@@ -73,6 +70,9 @@ const PURCHASE_SIGNALS = [
   "agregar al carrito",
   "añadir al carrito",
   "anadir al carrito",
+  "agregar al carro",
+  "añadir al carro",
+  "anadir al carro",
   "comprar ahora",
   "reserva ahora",
   "reservar ahora",
@@ -666,6 +666,78 @@ function catalogCandidateLinks(html, baseUrl) {
   return out;
 }
 
+const CATALOG_PRODUCT_URL =
+  /(?:https?:)?\/\/[a-z0-9.-]+\/(?:[a-z0-9_-]+\/)*?(?:product|products)\/[a-z0-9._~%/?#=+-]+/gi;
+
+/**
+ * Menciona el texto crudo la consola Zelda 40.
+ *
+ * Se aplica sobre el HTML sin interpretar porque el producto suele vivir
+ * dentro de un JSON embebido, que `normalize` elimina al quitar los <script>.
+ */
+function mentionsTargetConsole(rawText) {
+  const low = rawText.toLowerCase();
+  return (
+    /switch\s*2/.test(low) &&
+    low.includes("zelda") &&
+    (/\b40\b/.test(low) || low.includes("40th") || low.includes("40º") || low.includes("40°"))
+  );
+}
+
+/**
+ * Extrae la consola Zelda 40 del HTML de un catalogo de retailer.
+ *
+ * Falabella y otros marketplaces no exponen la ficha en un <a href>: la
+ * publican dentro de un JSON embebido y con HTML escapado, asi que el parseo
+ * por etiquetas no la encuentra. La URL sale del JSON; la disponibilidad y el
+ * precio salen del bloque visible del producto (donde esta el boton de compra).
+ */
+function catalogProductCandidates(html, baseUrl) {
+  const out = [];
+  const seen = new Set();
+
+  const urls = [];
+  for (const match of html.matchAll(CATALOG_PRODUCT_URL)) {
+    const raw = decodeHref(match[0]).trim();
+    let url;
+    try {
+      url = new URL(raw, baseUrl);
+    } catch (_) {
+      continue;
+    }
+    if (!/^https?:$/.test(url.protocol)) continue;
+    url.hash = "";
+    const clean = url.toString();
+    if (seen.has(clean)) continue;
+    const context = html.slice(Math.max(0, match.index - 1500), match.index + 1500);
+    if (!mentionsTargetConsole(context)) continue;
+    seen.add(clean);
+    urls.push(clean);
+  }
+  if (!urls.length) return out;
+
+  const visible = normalize(html);
+  const blocks = [];
+  for (const match of visible.matchAll(/switch\s*2.{0,200}?zelda.{0,120}?40/gi)) {
+    const block = visible.slice(Math.max(0, match.index - 400), match.index + 700);
+    if (mentionsTargetConsole(block)) blocks.push(block);
+  }
+  if (!blocks.length) return out;
+
+  for (const url of urls) {
+    const block = blocks[0];
+    const status = availabilityStatus(block, null, 200);
+    if (status === "unknown") continue;
+    out.push({
+      url,
+      status,
+      price_clp: fallbackPrice(block.replace(/\$\s+/g, "$")),
+      title: null,
+    });
+  }
+  return out;
+}
+
 async function inspectRetailerCatalogs() {
   const candidates = [];
   const statuses = [];
@@ -694,18 +766,35 @@ async function inspectRetailerCatalogs() {
         continue;
       }
 
+      const embedded = catalogProductCandidates(html, retailer.url);
       const links = catalogCandidateLinks(html, retailer.url);
-      if (!links.length) {
+      const all = [
+        ...embedded,
+        ...links.map((link) => ({ url: link.url, label: link.label })),
+      ];
+      if (!all.length) {
         statuses.push(retailer.name + ":not_found");
         continue;
       }
 
       let accepted = 0;
-      for (const link of links.slice(0, 5)) {
-        const current = await inspectStore({
-          name: retailer.name + " · catálogo",
-          url: link.url,
-        });
+      for (const candidate of all.slice(0, 6)) {
+        // El candidato embebido ya trae estado y precio leidos de la propia
+        // pagina: la ficha de producto suele estar bloqueada (403) y no se
+        // puede abrir para verificarla.
+        const current = candidate.status
+          ? {
+              name: retailer.name + " · catálogo",
+              url: candidate.url,
+              http: 200,
+              status: candidate.status,
+              price_clp: candidate.price_clp,
+              title: candidate.title || null,
+            }
+          : await inspectStore({
+              name: retailer.name + " · catálogo",
+              url: candidate.url,
+            });
         if (["error", "unknown", "page_missing"].includes(current.status)) continue;
         candidates.push({ ...current, source: "retailer_catalog", retailer: retailer.name });
         accepted += 1;
@@ -737,84 +826,9 @@ async function inspectZonaGamerIquique(includeSearch = false) {
   const candidates = [];
   const statuses = [];
 
-  // 1) Intento directo a la página pública de Facebook.
-  try {
-    const r = await fetchExternal(ZONA_GAMER_FB_URL, {
-      redirect: "follow",
-      headers: {
-        "user-agent": USER_AGENT,
-        "accept-language": "es-CL,es;q=0.9",
-        accept: "text/html,application/xhtml+xml",
-      },
-    });
-
-    if (!r.ok) {
-      statuses.push(`facebook_http_${r.status}`);
-    } else {
-      const html = await r.text();
-      const title = pageTitle(html) || "";
-      const first = `${title} ${normalize(html.slice(0, 30000))}`.toLowerCase();
-      const fbBlocked = [
-        ...CHALLENGE,
-        "log in to facebook",
-        "inicia sesión en facebook",
-        "create new account",
-      ].some((x) => first.includes(x));
-
-      if (fbBlocked) {
-        statuses.push("facebook_blocked_or_login");
-      } else {
-        const excerpt = targetExcerpt(html);
-        if (excerpt) {
-          candidates.push({
-            name: "Zona Gamer Iquique · Facebook",
-            url: ZONA_GAMER_FB_URL,
-            status: "available",
-            price_clp: fallbackPrice(excerpt),
-            title: "Posible publicación Switch 2 Zelda 40th en Zona Gamer Iquique",
-            source: "zona_gamer_facebook",
-            fingerprint: fingerprint(excerpt),
-          });
-          statuses.push("facebook_candidate_detected");
-        } else {
-          statuses.push("facebook_not_found");
-        }
-      }
-    }
-  } catch (_) {
-    statuses.push("facebook_fetch_error");
-  }
-
-  // 2) Espejo público de publicaciones de Zona Gamer Iquique.
-  try {
-    const r = await fetchExternal(ZONA_GAMER_MIRROR_URL, {
-      redirect: "follow",
-      headers: { "user-agent": USER_AGENT, "accept-language": "es-CL,es;q=0.9" },
-    });
-    if (!r.ok) {
-      statuses.push(`mirror_http_${r.status}`);
-    } else {
-      const html = await r.text();
-      const excerpt = targetExcerpt(html);
-      if (excerpt) {
-        candidates.push({
-          name: "Zona Gamer Iquique · publicación pública",
-          url: ZONA_GAMER_MIRROR_URL,
-          status: "available",
-          price_clp: fallbackPrice(excerpt),
-          title: "Posible publicación Switch 2 Zelda 40th en Zona Gamer Iquique",
-          source: "zona_gamer_mirror",
-          fingerprint: fingerprint(excerpt),
-        });
-        statuses.push("mirror_candidate_detected");
-      } else {
-        statuses.push("mirror_not_found");
-      }
-    }
-  } catch (_) {
-    statuses.push("mirror_fetch_error");
-  }
-
+  // 1-2) Las fuentes directas (la pagina publica de Facebook y su espejo)
+  //     estan caidas: Facebook responde 400 y el espejo no resuelve. Queda
+  //     solo el respaldo por buscador, que corre en las rondas amplias.
   // 3) Respaldo por buscador. Solo se usa en las rondas amplias.
   if (includeSearch) {
     const queries = [
