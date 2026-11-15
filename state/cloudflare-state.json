@@ -1,188 +1,124 @@
 {
-  "version": 1,
+  "discovered": {},
   "initialized": true,
+  "pending_available": {},
+  "retailer_discovered": {
+    "https://www.falabella.com/falabella-cl/product/159555264/consola-nintendo-switch-2-256gb-the-legend-of-zelda-40-aniversario-edicion-especial": {
+      "found_at": "2026-11-15T15:20:53.900Z",
+      "name": "Falabella · catálogo",
+      "retailer": "Falabella",
+      "url": "https://www.falabella.com/falabella-cl/product/159555264/consola-nintendo-switch-2-256gb-the-legend-of-zelda-40-aniversario-edicion-especial"
+    },
+    "https://www.falabella.com/falabella-cl/product/159672239/nintendo-switch-2-the-legend-of-zelda-40th-anniversary-edition": {
+      "found_at": "2026-11-15T15:20:53.900Z",
+      "name": "Falabella · catálogo",
+      "retailer": "Falabella",
+      "url": "https://www.falabella.com/falabella-cl/product/159672239/nintendo-switch-2-the-legend-of-zelda-40th-anniversary-edition"
+    }
+  },
+  "social_discovered": {},
   "stores": {
     "https://bestmart.cl/products/consola-nintendo-switch-2-the-legend-of-zelda-edicion-40-aniversario": {
+      "last_changed_at": "2026-11-15T13:32:53.900Z",
       "name": "Bestmart",
       "snapshot": {
         "http": 404,
-        "status": "page_missing",
         "price_clp": null,
+        "status": "page_missing",
         "title": null
-      },
-      "last_changed_at": "2026-11-15T13:32:53.900Z"
-    },
-    "https://www.santogames.cl/nintendo-switch-2-the-legend-of-zelda-40%C2%BA-aniversario": {
-      "name": "Santo Games",
-      "snapshot": {
-        "http": 200,
-        "status": "unavailable",
-        "price_clp": 699990,
-        "title": "Nintendo Switch 2 – The Legend of Zelda 40.º Aniversario"
-      },
-      "last_changed_at": "2026-11-15T13:32:53.900Z"
+      }
     },
     "https://playservice.cl/producto/preventa-consola-nintendo-switch-2-the-legend-of-zelda-40th-anniversary/": {
+      "last_changed_at": "2026-11-15T15:13:53.900Z",
       "name": "Play Service",
       "snapshot": {
         "http": 200,
-        "status": "unavailable",
         "price_clp": null,
+        "status": "unavailable",
         "title": "Preventa Consola Nintendo Switch 2 – The Legend of Zelda 40th Anniversary &#8211; Play Service Talca &#8211; Videojuegos y consolas"
-      },
-      "last_changed_at": "2026-11-15T15:13:53.900Z"
+      }
     },
-    "https://www.mathogames.cl/consolas-switch-2/2538-preventa-dia-1-consola-nintendo-switch-2-the-legend-of-zelda-40th-anniversary.html": {
-      "name": "Mathogames",
+    "https://www.falabella.com/falabella-cl/product/159555264/consola-nintendo-switch-2-256gb-the-legend-of-zelda-40-aniversario-edicion-especial": {
+      "last_changed_at": "2026-11-15T15:22:53.900Z",
+      "name": "Falabella · catálogo",
       "snapshot": {
-        "http": 404,
-        "status": "page_missing",
-        "price_clp": null,
+        "http": 200,
+        "price_clp": 559990,
+        "status": "available",
         "title": null
-      },
-      "last_changed_at": "2026-11-15T13:32:53.900Z"
+      }
     },
-    "https://www.todojuegos.cl/Productos/NS2/Consola-Switch-2-Zelda-40th-Aniversario/": {
-      "name": "TodoJuegos",
+    "https://www.falabella.com/falabella-cl/product/159672239/nintendo-switch-2-the-legend-of-zelda-40th-anniversary-edition": {
+      "last_changed_at": "2026-11-15T15:22:53.900Z",
+      "name": "Falabella · catálogo",
       "snapshot": {
         "http": 200,
-        "status": "unavailable",
-        "price_clp": 669900,
-        "title": "Consola Switch 2 Zelda 40th Aniversario [Consola Switch 2]"
-      },
-      "last_changed_at": "2026-11-15T13:32:53.900Z"
-    },
-    "https://www.paris.cl/preventa-consola-nintendo-switch-2-the-legend-of-zelda-40th-aniversario-609811999.html": {
-      "name": "Paris",
-      "snapshot": {
-        "http": 200,
+        "price_clp": 559990,
         "status": "available",
-        "price_clp": 719990,
-        "title": "Consola Nintendo Switch 2 The Legend of Zelda 40th Aniversario"
-      },
-      "last_changed_at": "2026-11-15T13:38:53.900Z"
-    },
-    "https://www.mathogames.cl/consolas-switch-2/2576-preventa-consola-nintendo-switch-2-the-legend-of-zelda-40th-anniversary-singapur-version.html": {
-      "name": "Mathogames",
-      "snapshot": {
-        "http": 200,
-        "status": "available",
-        "price_clp": 749990,
-        "title": "PREVENTA / Consola Nintendo Switch 2 – The Legend of Zelda 40th Anniversary Singapur Version"
-      },
-      "last_changed_at": "2026-11-15T15:07:53.900Z"
+        "title": null
+      }
     },
     "https://www.imperiogamers.cl/product/preventa-nintendo-switch-2-edicion-the-legend-of-zelda": {
+      "last_changed_at": "2026-11-15T15:19:53.900Z",
       "name": "Imperio Gamers",
       "snapshot": {
         "http": 200,
-        "status": "unavailable",
         "price_clp": 699990,
+        "status": "unavailable",
         "title": "Preventa Nintendo Switch 2 Edicion The Legend Of Zelda – Imperio Gamers"
-      },
-      "last_changed_at": "2026-11-15T15:19:53.900Z"
+      }
     },
-    "https://www.falabella.com/falabella-cl/product/143211057/Nintendo-Switch-Lite-Consola-Turquesa": {
-      "name": "Falabella · catálogo",
+    "https://www.mathogames.cl/consolas-switch-2/2538-preventa-dia-1-consola-nintendo-switch-2-the-legend-of-zelda-40th-anniversary.html": {
+      "last_changed_at": "2026-11-15T13:32:53.900Z",
+      "name": "Mathogames",
+      "snapshot": {
+        "http": 404,
+        "price_clp": null,
+        "status": "page_missing",
+        "title": null
+      }
+    },
+    "https://www.mathogames.cl/consolas-switch-2/2576-preventa-consola-nintendo-switch-2-the-legend-of-zelda-40th-anniversary-singapur-version.html": {
+      "last_changed_at": "2026-11-15T15:07:53.900Z",
+      "name": "Mathogames",
       "snapshot": {
         "http": 200,
+        "price_clp": 749990,
         "status": "available",
-        "price_clp": 559990,
-        "title": null
-      },
-      "last_changed_at": "2026-11-15T15:22:53.900Z"
+        "title": "PREVENTA / Consola Nintendo Switch 2 – The Legend of Zelda 40th Anniversary Singapur Version"
+      }
     },
-    "https://www.falabella.com/falabella-cl/product/159555264/consola-nintendo-switch-2-256gb-the-legend-of-zelda-40-aniversario-edicion-especial": {
-      "name": "Falabella · catálogo",
+    "https://www.paris.cl/preventa-consola-nintendo-switch-2-the-legend-of-zelda-40th-aniversario-609811999.html": {
+      "last_changed_at": "2026-11-15T13:38:53.900Z",
+      "name": "Paris",
       "snapshot": {
         "http": 200,
+        "price_clp": 719990,
         "status": "available",
-        "price_clp": 559990,
-        "title": null
-      },
-      "last_changed_at": "2026-11-15T15:22:53.900Z"
+        "title": "Consola Nintendo Switch 2 The Legend of Zelda 40th Aniversario"
+      }
     },
-    "https://www.falabella.com/falabella-cl/product/158693085/consola-nintendo-switch-2-ea-sports-fc-27-bundle": {
-      "name": "Falabella · catálogo",
+    "https://www.santogames.cl/nintendo-switch-2-the-legend-of-zelda-40%C2%BA-aniversario": {
+      "last_changed_at": "2026-11-15T13:32:53.900Z",
+      "name": "Santo Games",
       "snapshot": {
         "http": 200,
-        "status": "available",
-        "price_clp": 559990,
-        "title": null
-      },
-      "last_changed_at": "2026-11-15T15:22:53.900Z"
+        "price_clp": 699990,
+        "status": "unavailable",
+        "title": "Nintendo Switch 2 – The Legend of Zelda 40.º Aniversario"
+      }
     },
-    "https://www.falabella.com/falabella-cl/product/80872527/consola-nintendo-switch-2-neon-blue-neon-red": {
-      "name": "Falabella · catálogo",
+    "https://www.todojuegos.cl/Productos/NS2/Consola-Switch-2-Zelda-40th-Aniversario/": {
+      "last_changed_at": "2026-11-15T13:32:53.900Z",
+      "name": "TodoJuegos",
       "snapshot": {
         "http": 200,
-        "status": "available",
-        "price_clp": 559990,
-        "title": null
-      },
-      "last_changed_at": "2026-11-15T15:22:53.900Z"
-    },
-    "https://www.falabella.com/falabella-cl/product/152033535/reanimal-deluxe-edition-eu-nintendo-switch-2": {
-      "name": "Falabella · catálogo",
-      "snapshot": {
-        "http": 200,
-        "status": "available",
-        "price_clp": 559990,
-        "title": null
-      },
-      "last_changed_at": "2026-11-15T15:22:53.900Z"
-    },
-    "https://www.falabella.com/falabella-cl/product/159672239/nintendo-switch-2-the-legend-of-zelda-40th-anniversary-edition": {
-      "name": "Falabella · catálogo",
-      "snapshot": {
-        "http": 200,
-        "status": "available",
-        "price_clp": 559990,
-        "title": null
-      },
-      "last_changed_at": "2026-11-15T15:22:53.900Z"
+        "price_clp": 669900,
+        "status": "unavailable",
+        "title": "Consola Switch 2 Zelda 40th Aniversario [Consola Switch 2]"
+      }
     }
   },
-  "discovered": {},
-  "retailer_discovered": {
-    "https://www.falabella.com/falabella-cl/product/143211057/Nintendo-Switch-Lite-Consola-Turquesa": {
-      "name": "Falabella · catálogo",
-      "url": "https://www.falabella.com/falabella-cl/product/143211057/Nintendo-Switch-Lite-Consola-Turquesa",
-      "retailer": "Falabella",
-      "found_at": "2026-11-15T15:20:53.900Z"
-    },
-    "https://www.falabella.com/falabella-cl/product/159555264/consola-nintendo-switch-2-256gb-the-legend-of-zelda-40-aniversario-edicion-especial": {
-      "name": "Falabella · catálogo",
-      "url": "https://www.falabella.com/falabella-cl/product/159555264/consola-nintendo-switch-2-256gb-the-legend-of-zelda-40-aniversario-edicion-especial",
-      "retailer": "Falabella",
-      "found_at": "2026-11-15T15:20:53.900Z"
-    },
-    "https://www.falabella.com/falabella-cl/product/158693085/consola-nintendo-switch-2-ea-sports-fc-27-bundle": {
-      "name": "Falabella · catálogo",
-      "url": "https://www.falabella.com/falabella-cl/product/158693085/consola-nintendo-switch-2-ea-sports-fc-27-bundle",
-      "retailer": "Falabella",
-      "found_at": "2026-11-15T15:20:53.900Z"
-    },
-    "https://www.falabella.com/falabella-cl/product/80872527/consola-nintendo-switch-2-neon-blue-neon-red": {
-      "name": "Falabella · catálogo",
-      "url": "https://www.falabella.com/falabella-cl/product/80872527/consola-nintendo-switch-2-neon-blue-neon-red",
-      "retailer": "Falabella",
-      "found_at": "2026-11-15T15:20:53.900Z"
-    },
-    "https://www.falabella.com/falabella-cl/product/152033535/reanimal-deluxe-edition-eu-nintendo-switch-2": {
-      "name": "Falabella · catálogo",
-      "url": "https://www.falabella.com/falabella-cl/product/152033535/reanimal-deluxe-edition-eu-nintendo-switch-2",
-      "retailer": "Falabella",
-      "found_at": "2026-11-15T15:20:53.900Z"
-    },
-    "https://www.falabella.com/falabella-cl/product/159672239/nintendo-switch-2-the-legend-of-zelda-40th-anniversary-edition": {
-      "name": "Falabella · catálogo",
-      "url": "https://www.falabella.com/falabella-cl/product/159672239/nintendo-switch-2-the-legend-of-zelda-40th-anniversary-edition",
-      "retailer": "Falabella",
-      "found_at": "2026-11-15T15:20:53.900Z"
-    }
-  },
-  "zelda40_case_discovered": {},
-  "pending_available": {},
-  "social_discovered": {}
+  "version": 1,
+  "zelda40_case_discovered": {}
 }
