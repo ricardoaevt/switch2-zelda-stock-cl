@@ -51,6 +51,16 @@
         "title": "Consola Switch 2 Zelda 40th Aniversario [Consola Switch 2]"
       },
       "last_changed_at": "2026-11-15T13:32:53.900Z"
+    },
+    "https://www.paris.cl/preventa-consola-nintendo-switch-2-the-legend-of-zelda-40th-aniversario-609811999.html": {
+      "name": "Paris",
+      "snapshot": {
+        "http": 200,
+        "status": "available",
+        "price_clp": 719990,
+        "title": "Consola Nintendo Switch 2 The Legend of Zelda 40th Aniversario"
+      },
+      "last_changed_at": "2026-11-15T13:38:53.900Z"
     }
   },
   "discovered": {},
