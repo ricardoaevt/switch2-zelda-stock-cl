@@ -39,14 +39,14 @@
       }
     },
     "https://www.falabella.com/falabella-cl/product/159555264/consola-nintendo-switch-2-256gb-the-legend-of-zelda-40-aniversario-edicion-especial": {
-      "last_changed_at": "2026-11-15T15:22:53.900Z",
       "name": "Falabella · catálogo",
       "snapshot": {
         "http": 200,
-        "price_clp": 559990,
         "status": "available",
-        "title": null
-      }
+        "price_clp": 559990,
+        "title": "Consola Switch 2 256GB The Legend of Zelda 40 . Versión Global Original"
+      },
+      "last_changed_at": "2026-11-15T15:24:53.900Z"
     },
     "https://www.falabella.com/falabella-cl/product/159672239/nintendo-switch-2-the-legend-of-zelda-40th-anniversary-edition": {
       "last_changed_at": "2026-11-15T15:22:53.900Z",
