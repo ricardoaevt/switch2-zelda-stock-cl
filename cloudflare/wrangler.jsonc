@@ -14,7 +14,7 @@
     "crons": ["* * * * *"]
   },
   "vars": {
-    "GITHUB_OWNER": "TU-USUARIO-GITHUB",
+    "GITHUB_OWNER": "ricardoaevt",
     "GITHUB_REPO": "switch2-zelda-stock-cl"
   }
 }
