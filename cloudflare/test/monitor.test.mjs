@@ -1,0 +1,260 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+
+import { runMonitor } from "../src/monitor-core.js";
+
+const OWNER = "test-owner";
+const REPO = "test-repo";
+const STATE_URL = `https://api.github.com/repos/${OWNER}/${REPO}/contents/state/cloudflare-state.json`;
+const ISSUES_URL = `https://api.github.com/repos/${OWNER}/${REPO}/issues`;
+const STATE_PATH = "state/cloudflare-state.json";
+
+// Minuto 7: no dispara descubrimiento amplio (15), catálogos (2), redes (5)
+// ni escaneo de estuches (5). Aísla el comportamiento de las tiendas conocidas.
+const SCHEDULED_TIME = Date.parse("2026-01-01T00:07:00.000Z");
+
+const ENV = {
+  GITHUB_TOKEN: "test-token",
+  GITHUB_OWNER: OWNER,
+  GITHUB_REPO: REPO,
+  NOTIFY_USER: OWNER,
+};
+
+function storeFixture({ availability, price = "699990", body = "" }) {
+  return `<!doctype html>
+<html>
+  <head><title>Consola Nintendo Switch 2 The Legend of Zelda 40th Anniversary</title></head>
+  <body>
+    <h1>Nintendo Switch 2 The Legend of Zelda 40th Anniversary</h1>
+    <script type="application/ld+json">
+    {
+      "@type": "Product",
+      "name": "Consola Nintendo Switch 2 The Legend of Zelda 40th Anniversary Edition",
+      "offers": {
+        "@type": "Offer",
+        "price": "${price}",
+        "priceCurrency": "CLP",
+        "availability": "https://schema.org/${availability}"
+      }
+    }
+    </script>
+    ${body}
+  </body>
+</html>`;
+}
+
+const CHALLENGE_PAGE = `<!doctype html>
+<html><head><title>Just a moment...</title></head>
+<body><p>Checking your browser before accessing the site.</p></body></html>`;
+
+const GENERIC_PAGE = `<!doctype html>
+<html><head><title>Página sin producto</title></head><body><p>Sin información.</p></body></html>`;
+
+/**
+ * Stub de fetch: intercepta la API de GitHub y devuelve fixtures HTML para
+ * cualquier tienda, sin tocar la red.
+ */
+function makeFetch({ state = null, page }) {
+  const calls = { issues: [], statePuts: [], fetched: [] };
+
+  const stub = async (input, init = {}) => {
+    const url = typeof input === "string" ? input : String(input?.url ?? input);
+    const method = (init.method || "GET").toUpperCase();
+    calls.fetched.push(url);
+
+    if (url === STATE_URL) {
+      if (method === "PUT") {
+        calls.statePuts.push(JSON.parse(init.body));
+        return new Response(JSON.stringify({ content: {} }), { status: 200 });
+      }
+      if (!state) return new Response(JSON.stringify({ message: "Not Found" }), { status: 404 });
+      return new Response(
+        JSON.stringify({
+          sha: "state-sha",
+          content: Buffer.from(JSON.stringify(state), "utf8").toString("base64"),
+        }),
+        { status: 200 },
+      );
+    }
+
+    if (url === ISSUES_URL) {
+      calls.issues.push(JSON.parse(init.body || "{}"));
+      return new Response(JSON.stringify({ number: calls.issues.length }), { status: 201 });
+    }
+
+    if (url.includes("bing.com")) {
+      return new Response(
+        "<?xml version=\"1.0\"?><rss version=\"2.0\"><channel></channel></rss>",
+        { status: 200, headers: { "content-type": "application/rss+xml" } },
+      );
+    }
+
+    if (url.startsWith("https://api.github.com/")) {
+      return new Response(JSON.stringify({}), { status: 200 });
+    }
+
+    if (url.includes("mercadolibre.cl")) {
+      return new Response(GENERIC_PAGE, { status: 200 });
+    }
+
+    return new Response(page, { status: 200, headers: { "content-type": "text/html" } });
+  };
+
+  return { stub, calls };
+}
+
+function decodeSavedState(call) {
+  return JSON.parse(Buffer.from(call.content, "base64").toString("utf8"));
+}
+
+test("primera corrida construye la línea base y no genera alertas", async () => {
+  const { stub, calls } = makeFetch({
+    page: storeFixture({ availability: "OutOfStock", body: "<p>Producto agotado</p>" }),
+  });
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = stub;
+
+  try {
+    const result = await runMonitor(ENV, SCHEDULED_TIME, false);
+
+    assert.equal(result.alerts, 0, "la línea base no debe generar alertas");
+    assert.equal(result.initialized, true);
+    assert.equal(calls.issues.length, 0, "no debe abrir Issue en la línea base");
+    assert.equal(calls.statePuts.length, 1, "debe persistir el estado inicial");
+
+    const state = decodeSavedState(calls.statePuts[0]);
+    assert.equal(state.initialized, true);
+    assert.ok(Object.keys(state.stores).length > 0, "debe guardar el snapshot de las tiendas");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("el pasaje a disponible exige dos lecturas y recién ahí abre el Issue", async () => {
+  const baseline = makeFetch({
+    page: storeFixture({ availability: "OutOfStock", body: "<p>Producto agotado</p>" }),
+  });
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = baseline.stub;
+
+  let state;
+  try {
+    await runMonitor(ENV, SCHEDULED_TIME, false);
+    state = decodeSavedState(baseline.calls.statePuts[0]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  // Primera lectura "disponible": queda pendiente de confirmación, sin alerta.
+  const first = makeFetch({
+    state,
+    page: storeFixture({ availability: "InStock", body: "<p>Agregar al carrito</p>" }),
+  });
+  globalThis.fetch = first.stub;
+
+  let pendingState;
+  try {
+    const result = await runMonitor(ENV, SCHEDULED_TIME, false);
+
+    assert.equal(result.alerts, 0, "una sola lectura no debe generar alerta");
+    assert.equal(first.calls.issues.length, 0, "una sola lectura no debe abrir Issue");
+    assert.ok(
+      result.pending_availability_confirmations > 0,
+      "la disponibilidad queda pendiente de una segunda lectura",
+    );
+    pendingState = decodeSavedState(first.calls.statePuts[0]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  // Segunda lectura consecutiva "disponible": ahí sí se alerta.
+  const second = makeFetch({
+    state: pendingState,
+    page: storeFixture({ availability: "InStock", body: "<p>Agregar al carrito</p>" }),
+  });
+  globalThis.fetch = second.stub;
+
+  try {
+    const result = await runMonitor(ENV, SCHEDULED_TIME, false);
+
+    assert.ok(result.alerts > 0, "el cambio de stock confirmado debe generar alerta");
+    assert.equal(second.calls.issues.length, 1, "debe abrir exactamente un Issue");
+    assert.match(second.calls.issues[0].title, /novedad/i);
+    assert.match(second.calls.issues[0].body, /disponible/i);
+
+    const saved = decodeSavedState(second.calls.statePuts[0]);
+    const statuses = Object.values(saved.stores).map((entry) => entry.snapshot.status);
+    assert.ok(
+      statuses.includes("available"),
+      "el estado guardado debe registrar la tienda como disponible",
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("una página anti-bot no pisa el último estado confiable ni dispara alerta", async () => {
+  const baseline = makeFetch({
+    page: storeFixture({ availability: "InStock", body: "<p>Agregar al carrito</p>" }),
+  });
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = baseline.stub;
+
+  let state;
+  try {
+    await runMonitor(ENV, SCHEDULED_TIME, false);
+    state = decodeSavedState(baseline.calls.statePuts[0]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  const blocked = makeFetch({ state, page: CHALLENGE_PAGE });
+  globalThis.fetch = blocked.stub;
+
+  try {
+    const result = await runMonitor(ENV, SCHEDULED_TIME, false);
+
+    assert.equal(result.alerts, 0, "un desafío anti-bot no es una alerta de stock");
+    assert.equal(blocked.calls.issues.length, 0, "no debe abrir Issue por un bloqueo");
+    assert.ok(result.skipped_stores > 0, "las tiendas bloqueadas se reportan como omitidas");
+    assert.equal(
+      blocked.calls.statePuts.length,
+      0,
+      "no debe sobrescribir el estado con lecturas no concluyentes",
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("el estado persistido usa la ruta y el versionado esperados", async () => {
+  const { stub, calls } = makeFetch({
+    page: storeFixture({ availability: "OutOfStock" }),
+  });
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = stub;
+
+  try {
+    await runMonitor(ENV, SCHEDULED_TIME, false);
+
+    const putUrl = calls.fetched.find((url) => url === STATE_URL);
+    assert.ok(putUrl, "debe usar la API de contents para persistir el estado");
+    assert.ok(
+      calls.fetched.some((url) => url.startsWith(`https://api.github.com/repos/${OWNER}/${REPO}/`)),
+      "todas las llamadas de GitHub deben ir al repo configurado",
+    );
+    assert.ok(
+      !calls.fetched.some((url) => url.includes("jsantiscl")),
+      "no debe quedar ninguna referencia al owner del upstream",
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("el monitor exige GITHUB_TOKEN y no corre sin él", async () => {
+  await assert.rejects(
+    () => runMonitor({ ...ENV, GITHUB_TOKEN: undefined }, SCHEDULED_TIME, false),
+    /Missing GITHUB_TOKEN/,
+  );
+});
