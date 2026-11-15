@@ -6,6 +6,10 @@ en tiendas chilenas y avisa apenas aparece stock, preventa, cambia el precio o s
 Motor: scraping de las tiendas conocidas + JSON-LD, con estado diff-based persistido en GitHub.
 Disparador: un **Cloudflare Worker** con cron de 1 minuto que pide a **GitHub Actions** ejecutar el monitor.
 
+> 📖 **[MANUAL.md](MANUAL.md)** — cómo funciona por dentro: modelo mental, protocolos, reglas de
+> confianza del monitor, costos y límites reales, estado de cada fuente, troubleshooting y glosario.
+> Este README es la guía de instalación; el manual es el de operación.
+
 ```
 Cloudflare Cron (cada 1 min)
         │  repository_dispatch: cloudflare_tick
