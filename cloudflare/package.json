@@ -1,0 +1,16 @@
+{
+  "name": "switch2-zelda-stock-cl-cloudflare",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --test-scheduled",
+    "deploy": "wrangler deploy",
+    "configure": "node scripts/configure-owner.mjs",
+    "test": "node --test test/monitor.test.mjs",
+    "check": "node --check src/monitor-core.js && node --check src/index.js && node --check run-monitor.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

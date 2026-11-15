@@ -1,0 +1,63 @@
+name: Monitor Zelda disparado por Cloudflare
+
+run-name: 🤖 Cloudflare → GitHub · ${{ github.event.client_payload.scheduled_time || 'manual' }}
+
+on:
+  repository_dispatch:
+    types: [cloudflare_tick]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: switch2-zelda-monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Descargar solo archivos del monitor
+        shell: bash
+        env:
+          REPO: ${{ github.repository }}
+          REF: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p cloudflare/src
+
+          BASE="https://raw.githubusercontent.com/${REPO}/${REF}"
+
+          curl --fail --silent --show-error --location             --retry 3 --retry-delay 1             "${BASE}/cloudflare/run-monitor.mjs"             --output cloudflare/run-monitor.mjs
+
+          curl --fail --silent --show-error --location             --retry 3 --retry-delay 1             "${BASE}/cloudflare/src/monitor-core.js"             --output cloudflare/src/monitor-core.js
+
+          test -s cloudflare/run-monitor.mjs
+          test -s cloudflare/src/monitor-core.js
+
+          echo "Archivos descargados:"
+          wc -c cloudflare/run-monitor.mjs cloudflare/src/monitor-core.js
+
+      - name: Validar JavaScript
+        run: |
+          node --check cloudflare/run-monitor.mjs
+          node --check cloudflare/src/monitor-core.js
+
+      - name: Ejecutar monitor completo
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          SCHEDULED_TIME: ${{ github.event.client_payload.scheduled_time || '' }}
+          NOTIFY_USER: ${{ vars.NOTIFY_USER }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: node cloudflare/run-monitor.mjs
