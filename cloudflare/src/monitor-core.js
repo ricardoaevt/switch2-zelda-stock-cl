@@ -705,7 +705,14 @@ function catalogProductCandidates(html, baseUrl) {
   )) {
     const name = decodeHref(match[1]).trim();
     if (!mentionsTargetConsole(name)) continue;
-    names.push({ name, index: match.index });
+    // El precio del mismo item viene a continuacion en el JSON.
+    const region = html.slice(match.index, match.index + 900);
+    const priceMatch = region.match(/price(?:&quot;|"|\\")\s*:\s*(?:&quot;|"|\\")?([\d.]+)/);
+    names.push({
+      name,
+      index: match.index,
+      price: priceMatch ? money(priceMatch[1]) : null,
+    });
   }
   if (!names.length) return out;
 
@@ -729,12 +736,12 @@ function catalogProductCandidates(html, baseUrl) {
       .pop();
     if (!owner) continue;
     seen.add(clean);
-    urls.push({ url: clean, name: owner.name });
+    urls.push({ url: clean, name: owner.name, price: owner.price });
   }
   if (!urls.length) return out;
 
-  // Disponibilidad y precio: del bloque visible del producto, donde la grilla
-  // muestra el boton de compra junto al titulo.
+  // Disponibilidad: del bloque visible del producto, donde la grilla muestra
+  // el boton de compra junto al titulo.
   const visible = normalize(html);
   const blocks = [];
   for (const match of visible.matchAll(/switch\s*2.{0,200}?zelda.{0,120}?40/gi)) {
@@ -743,17 +750,40 @@ function catalogProductCandidates(html, baseUrl) {
   }
   if (!blocks.length) return out;
 
-  // El orden del JSON y el de la grilla es el mismo, asi que se emparejan por
-  // posicion.
-  for (let i = 0; i < urls.length && i < blocks.length; i++) {
-    const block = blocks[i];
-    const status = availabilityStatus(block, null, 200);
+  const GENERIC = new Set([
+    "nintendo", "consola", "switch", "edition", "global", "original",
+    "version", "anniversary", "legend", "zelda", "the", "para",
+  ]);
+  const tokensOf = (text) =>
+    new Set(
+      text
+        .toLowerCase()
+        .split(/[^a-z0-9áéíóúñ]+/)
+        .filter((w) => w.length > 3 && !GENERIC.has(w)),
+    );
+
+  for (const item of urls) {
+    // El bloque visible que mas coincide con el nombre del producto.
+    const wanted = tokensOf(item.name);
+    let best = null;
+    let bestScore = 0;
+    for (const block of blocks) {
+      let score = 0;
+      for (const token of wanted) if (block.toLowerCase().includes(token)) score += 1;
+      if (score > bestScore) {
+        bestScore = score;
+        best = block;
+      }
+    }
+    if (!best || bestScore === 0) continue;
+
+    const status = availabilityStatus(best, null, 200);
     if (status === "unknown") continue;
     out.push({
-      url: urls[i].url,
+      url: item.url,
       status,
-      price_clp: fallbackPrice(block.replace(/\$\s+/g, "$")),
-      title: urls[i].name,
+      price_clp: item.price ?? fallbackPrice(best.replace(/\$\s+/g, "$")),
+      title: item.name,
     });
   }
   return out;
