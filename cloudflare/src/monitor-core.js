@@ -13,7 +13,7 @@ const STORES = [
   },
   {
     name: "Mathogames",
-    url: "https://www.mathogames.cl/consolas-switch-2/2538-preventa-dia-1-consola-nintendo-switch-2-the-legend-of-zelda-40th-anniversary.html",
+    url: "https://www.mathogames.cl/consolas-switch-2/2576-preventa-consola-nintendo-switch-2-the-legend-of-zelda-40th-anniversary-singapur-version.html",
   },
   {
     name: "TodoJuegos",
@@ -1379,7 +1379,13 @@ async function runMonitor(env, scheduledTime = Date.now(), forceDiscovery = fals
         dirty = true;
       }
 
-      if (initialized && old && actionableChange(old, current, false)) {
+      // Una tienda de la lista fija que aparece disponible sin snapshot previo
+      // (porque sus lecturas anteriores fallaron) debe alertar: es la misma
+      // semántica que ya aplica a las tiendas descubiertas. Antes esto solo
+      ///passaba con transiciones desde un historial existente, y una tienda
+      // que se recuperaba después de fallar quedaba muda para siempre.
+      const isNewListing = !old;
+      if (initialized && actionableChange(old, current, isNewListing)) {
         alerts.push(describe(current, old, false));
       }
     }

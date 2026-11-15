@@ -1,7 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
 
 import { runMonitor } from "../src/monitor-core.js";
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const CORE_PATH = path.join(HERE, "..", "src", "monitor-core.js");
 
 const OWNER = "test-owner";
 const REPO = "test-repo";
@@ -256,5 +262,84 @@ test("el monitor exige GITHUB_TOKEN y no corre sin él", async () => {
   await assert.rejects(
     () => runMonitor({ ...ENV, GITHUB_TOKEN: undefined }, SCHEDULED_TIME, false),
     /Missing GITHUB_TOKEN/,
+  );
+});
+
+// S12: una tienda de la lista fija que aparece disponible sin snapshot previo
+// (porque sus lecturas anteriores fallaron) debe generar alerta, igual que
+// ya ocurre con las tiendas descubiertas.
+test("una tienda conocida sin snapshot previo que aparece disponible genera alerta", async () => {
+  const state = {
+    version: 1,
+    initialized: true,
+    stores: {},
+    discovered: {},
+    pending_available: {},
+  };
+
+  const available = makeFetch({
+    state,
+    page: storeFixture({ availability: "InStock", body: "<p>Agregar al carrito</p>" }),
+  });
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = available.stub;
+
+  try {
+    const result = await runMonitor(ENV, SCHEDULED_TIME, false);
+
+    assert.ok(result.alerts > 0, "una tienda disponible sin historial debe alertar");
+    assert.equal(available.calls.issues.length, 1, "debe abrir un Issue");
+    assert.match(available.calls.issues[0].body, /disponible/i);
+
+    const saved = decodeSavedState(available.calls.statePuts[0]);
+    const statuses = Object.values(saved.stores).map((entry) => entry.snapshot.status);
+    assert.ok(
+      statuses.includes("available"),
+      "el estado debe registrar las tiendas como disponibles",
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("una tienda conocida sin snapshot previo que sigue agotada no alerta", async () => {
+  const state = {
+    version: 1,
+    initialized: true,
+    stores: {},
+    discovered: {},
+    pending_available: {},
+  };
+
+  const soldOut = makeFetch({
+    state,
+    page: storeFixture({ availability: "OutOfStock", body: "<p>Producto agotado</p>" }),
+  });
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = soldOut.stub;
+
+  try {
+    const result = await runMonitor(ENV, SCHEDULED_TIME, false);
+
+    assert.equal(result.alerts, 0, "agotado sin historial no es una alerta");
+    assert.equal(soldOut.calls.issues.length, 0, "no debe abrir Issue");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+// S13: la ficha de Mathogames que vigila el motor debe ser la vigente.
+test("la URL de Mathogames en STORES es la vigente", async () => {
+  const source = await readFile(CORE_PATH, "utf8");
+
+  assert.ok(
+    source.includes(
+      "https://www.mathogames.cl/consolas-switch-2/2576-preventa-consola-nintendo-switch-2-the-legend-of-zelda-40th-anniversary-singapur-version.html",
+    ),
+    "STORES debe apuntar a la ficha vigente de Mathogames",
+  );
+  assert.ok(
+    !source.includes("2538-preventa-dia-1"),
+    "no debe quedar la URL caída de Mathogames",
   );
 });

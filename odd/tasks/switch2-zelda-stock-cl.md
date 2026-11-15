@@ -15,6 +15,8 @@ Implementar en este repositorio el monitor de stock de la consola *Nintendo Swit
 - **S9** — Documentación de puesta en marcha en español: repositorio GitHub, PAT fine-grained, secrets del Worker, deploy, verificación de una corrida real.
 - **S10** — Riesgo operativo conocido: GitHub Actions cobra minutos en repositorios privados; el dispatch de 1 minuto requiere repositorio público para no agotar la cuota.
 - **S11** — "en el repo deja el manual de todo lo aprendido y de como fucniona si es que ya no lo hay. a lo mejor el readme lo decia claramente yyo no lo lei. de no ser asi crea el manual" — el README existente cubría instalación pero no el modelo mental, los protocolos, los límites reales ni los hallazgos; el manual se crea aparte y el README lo enlaza.
+- **S12** — Alerta para tienda conocida sin snapshot previo: "cuando una tienda de la lista fija aparece disponible y no tiene snapshot previo (porque sus lecturas anteriores fallaron), debe generar alerta, igual que ya ocurre con las tiendas descubiertas". Contexto medido en produccion: Paris figura `available` a $719.990 y no abrio Issue ni aviso por Telegram.
+- **S13** — URL vigente de Mathogames: `https://www.mathogames.cl/consolas-switch-2/2576-preventa-consola-nintendo-switch-2-the-legend-of-zelda-40th-anniversary-singapur-version.html` (200, `available`). La anterior (`2538-preventa-dia-1-...`) devuelve 404 y queda en `page_missing`.
 
 ## Tasks
 
@@ -27,6 +29,9 @@ Implementar en este repositorio el monitor de stock de la consola *Nintendo Swit
 | T5 | S8, S9 | inline — verificación final (tests + `node --check`) y commit inicial | `5586f40` |
 | T6 | S9, S10 | inline — desplegar el Worker (import desde dashboard), documentar la vía dashboard y verificar el circuito en vivo | `f9d7684` |
 | T7 | S11 | inline — escribir `MANUAL.md` (modelo mental, protocolos, reglas del monitor, costos y límites, estado de fuentes, troubleshooting, glosario) y enlazarlo desde el README | `414c3ca` |
+| T8 | S12, S13 | worker — alerta de tienda conocida sin snapshot previo + URL vigente de Mathogames, con test primero | `TBD` |
+| T9 | S12, S13 | inline — review nativo del rango commiteado, push y verificacion en produccion | `TBD` |
+| T10 | S12 | inline — migrar `TELEGRAM_CHAT_ID` del chat privado al grupo | `TBD` |
 
 ## Log
 
