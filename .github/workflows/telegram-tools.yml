@@ -12,6 +12,7 @@ on:
         options:
           - descubrir_chat_id
           - enviar_prueba
+          - diagnosticar
 
 jobs:
   telegram:
@@ -33,19 +34,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          RESPONSE="$(curl -fsS "https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?limit=100")"
+          RESPONSE="$(curl -sS "https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?limit=100")"
 
           if [ "$(echo "$RESPONSE" | jq -r '.ok')" != "true" ]; then
-            echo "::error::Telegram rechazó el token."
+            echo "::error::Telegram rechazó el token: $(echo "$RESPONSE" | jq -r '.description // "sin detalle"')"
             exit 1
           fi
 
           GROUPS="$(echo "$RESPONSE" | jq -r '
             [
               .result[]
-              | (.message // .edited_message // .channel_post // empty)
+              | (.message // .edited_message // .channel_post // .my_chat_member // empty)
               | .chat
-              | select(.type == "group" or .type == "supergroup")
+              | select(.type == "group" or .type == "supergroup" or .type == "channel")
               | {id: .id, title: (.title // "sin nombre"), type: .type}
             ]
             | unique_by(.id)
@@ -87,12 +88,69 @@ jobs:
 
           PAYLOAD="$(jq -n --arg chat "$CHAT_ID" --arg text "✅ Prueba correcta: el monitor de la Nintendo Switch 2 Zelda 40th ya puede avisar a este grupo." '{chat_id:$chat,text:$text}')"
 
-          RESPONSE="$(curl -fsS             -H 'Content-Type: application/json'             -d "$PAYLOAD"             "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage")"
+          RESPONSE="$(curl -sS             -H 'Content-Type: application/json'             -d "$PAYLOAD"             "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage")"
 
           if [ "$(echo "$RESPONSE" | jq -r '.ok')" != "true" ]; then
             echo "$RESPONSE" | jq
-            echo "::error::Telegram no pudo enviar el mensaje."
+            echo "::error::Telegram no pudo enviar el mensaje: $(echo "$RESPONSE" | jq -r '.description // "sin detalle"')"
             exit 1
           fi
 
           echo "### ✅ Mensaje de prueba enviado correctamente" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Diagnosticar bot, chat y pendientes
+        if: inputs.action == 'diagnosticar'
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          {
+            echo "### 🤖 Bot"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          ME="$(curl -sS "https://api.telegram.org/bot${BOT_TOKEN}/getMe")"
+          echo "getMe ok=$(echo "$ME" | jq -r '.ok') description=$(echo "$ME" | jq -r '.description // "—")" >> "$GITHUB_STEP_SUMMARY"
+          echo "bot=@$(echo "$ME" | jq -r '.result.username // "desconocido"') id=$(echo "$ME" | jq -r '.result.id // "—")" >> "$GITHUB_STEP_SUMMARY"
+          echo "getMe -> ok=$(echo "$ME" | jq -r '.ok') bot=@$(echo "$ME" | jq -r '.result.username // "?") desc=$(echo "$ME" | jq -r '.description // "—")"
+
+          if [ -n "${CHAT_ID:-}" ]; then
+            {
+              echo ""
+              echo "### 🎯 Chat configurado"
+              echo ""
+            } >> "$GITHUB_STEP_SUMMARY"
+
+            CHAT="$(curl -sS "https://api.telegram.org/bot${BOT_TOKEN}/getChat?chat_id=${CHAT_ID}")"
+            echo "getChat ok=$(echo "$CHAT" | jq -r '.ok') description=$(echo "$CHAT" | jq -r '.description // "—")" >> "$GITHUB_STEP_SUMMARY"
+            echo "tipo=$(echo "$CHAT" | jq -r '.result.type // "—"') titulo=$(echo "$CHAT" | jq -r '.result.title // "—"')" >> "$GITHUB_STEP_SUMMARY"
+            echo "getChat -> ok=$(echo "$CHAT" | jq -r '.ok') desc=$(echo "$CHAT" | jq -r '.description // "—") tipo=$(echo "$CHAT" | jq -r '.result.type // "—")"
+          else
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "⚠️ No hay secret TELEGRAM_CHAT_ID configurado." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          {
+            echo ""
+            echo "### 📥 Chats que el bot ve ahora"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          UPDATES="$(curl -sS "https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?limit=100")"
+          echo "$UPDATES" | jq -r '
+            [
+              .result[]
+              | (.message // .edited_message // .channel_post // .my_chat_member // empty)
+              | .chat
+              | {id: .id, type: .type, title: (.title // .username // .first_name // "sin nombre")}
+            ]
+            | unique_by(.id)
+            | .[]
+            | "| \(.id) | \(.type) | \(.title) |"
+          ' >> "$GITHUB_STEP_SUMMARY"
+
+          echo "--- log plano ---"
+          echo "getUpdates: $(echo "$UPDATES" | jq -c '[.result[] | (.message // .edited_message // .channel_post // .my_chat_member // empty) | .chat | {id, type, title}] | unique_by(.id)')"
