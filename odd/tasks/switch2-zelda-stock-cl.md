@@ -21,6 +21,8 @@ Implementar en este repositorio el monitor de stock de la consola *Nintendo Swit
 - **S15** — Falabella publica la consola Zelda 40 dentro de un JSON embebido y con HTML escapado (no en un `<a href>`), y la ficha de producto responde 403: el escaneo de catálogos debe leer el producto del JSON y tomar disponibilidad y precio del bloque visible de la página. Además, `PURCHASE_SIGNALS` no incluía "agregar al carro", la forma que usa Falabella.
 - **S16** — El escaneo de catálogos no puede tomar como Zelda 40 cualquier producto cercano: en la misma colección conviven Switch Lite, FC 27 Bundle, Neon Blue y Reanimal, y una versión anterior del escaneo los alertó como si fueran la consola. Cada URL debe emparejarse con **su propio nombre** y su precio debe salir del **propio ítem en el JSON** (el precio del texto visible era el de otra tarjeta).
 
+- **S17** — El monitor consulta **URLs fijas**: si una tienda mueve la ficha de la consola, el motor deja de verla ahí. Hace falta una red que no dependa del índice de Bing: el **buscador de cada tienda** (cada 5 minutos), con filtros que solo dejan entrar fichas que (a) son la consola Zelda 40 por título, (b) tienen precio en la banda de la consola y (c) cuyo precio es el de ese producto y no el de un vecino.
+
 ## Tasks
 
 | ID | Specs | Route | Commit |
@@ -38,6 +40,7 @@ Implementar en este repositorio el monitor de stock de la consola *Nintendo Swit
 | T11 | S14 | inline — sacar las fuentes muertas, añadir Imperio Gamers, retirar las fuentes directas de Zona Gamer | `TBD` |
 | T12 | S15 | inline — leer el producto embebido en el escaneo de catálogos y corregir `PURCHASE_SIGNALS` | `7398d58` |
 | T13 | S16 | inline — emparejar cada producto con su nombre y leer el precio del JSON (evita 4 alertas falsas) | `c5dc644` |
+| T14 | S17 | inline — capa de búsqueda por tienda (cada 5 min) con filtros de título, banda de precio y precio propio | `TBD` |
 
 ## Log
 

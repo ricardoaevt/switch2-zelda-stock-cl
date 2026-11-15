@@ -12,6 +12,9 @@ const CORE_PATH = path.join(HERE, "..", "src", "monitor-core.js");
 // Minuto 2: dispara el escaneo de catálogos (minuto % 2 === 0).
 const SCHEDULED_CATALOG_TIME = Date.parse("2026-01-01T00:02:00.000Z");
 
+// Minuto 5: dispara el buscador por tienda (minuto % 5 === 0).
+const SCHEDULED_SEARCH_TIME = Date.parse("2026-01-01T00:05:00.000Z");
+
 const OWNER = "test-owner";
 const REPO = "test-repo";
 const STATE_URL = `https://api.github.com/repos/${OWNER}/${REPO}/contents/state/cloudflare-state.json`;
@@ -467,6 +470,51 @@ test("el escaneo de catalogos ignora las otras consolas de la misma pagina", asy
       !found.some((u) => u.includes("143211057")),
       "no debe tomar la Switch Lite por la consola Zelda 40",
     );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+// S17: el buscador de la tienda debe encontrar la consola Zelda 40 y descartar
+// los demas productos de la pagina (accesorios, juegos y otras consolas).
+test("el buscador de tienda encuentra la consola y descarta el resto", async () => {
+  const page = `<!doctype html>
+<html><body>
+  <div class="product">
+    <a href="/product/111/juego-zelda-tears-of-the-kingdom">Juego The Legend of Zelda Tears of the Kingdom $ 59.990</a>
+  </div>
+  <div class="product">
+    <a href="/product/222/pro-controller-switch-2-zelda-40">Pro Controller Switch 2 Zelda 40th $ 169.990 agregar al carrito</a>
+  </div>
+  <div class="product">
+    <a href="/product/333/consola-switch-2-256gb-zelda-40">Consola Nintendo Switch 2 256GB The Legend of Zelda 40 $ 819.990 agregar al carro</a>
+  </div>
+  <div class="product">
+    <a href="/product/444/switch-lite">Nintendo Switch Lite Consola Turquesa $ 199.990 agregar al carrito</a>
+  </div>
+</body></html>`;
+
+  const { stub, calls } = makeFetch({ page });
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = stub;
+
+  try {
+    // Minuto 5: dispara el buscador de tienda (minute % 5 === 0).
+    const result = await runMonitor(ENV, SCHEDULED_SEARCH_TIME, false);
+
+    assert.match(
+      String(result.store_searches),
+      /candidate_/,
+      "el buscador debe reportar candidatos",
+    );
+
+    const saved = decodeSavedState(calls.statePuts[0]);
+    const found = Object.keys(saved.retailer_discovered || {});
+
+    assert.ok(found.some((u) => u.includes("/333/")), "debe encontrar la consola Zelda 40");
+    assert.ok(!found.some((u) => u.includes("/222/")), "no debe tomar el pro controller");
+    assert.ok(!found.some((u) => u.includes("/444/")), "no debe tomar la Switch Lite");
+    assert.ok(!found.some((u) => u.includes("/111/")), "no debe tomar el juego de Zelda");
   } finally {
     globalThis.fetch = originalFetch;
   }

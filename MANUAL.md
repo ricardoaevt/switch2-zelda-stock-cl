@@ -363,6 +363,30 @@ presente de forma estable (10 de 10 lecturas en 40 s), pero el stock depende del
 puede alternar entre "con stock" y "sin stock" en minutos. El monitor interpreta el botón como
 disponibilidad, así que **es la fuente con más riesgo de falso positivo** del conjunto.
 
+### 7.2 El buscador de cada tienda (red propia, sin depender de Bing)
+
+El núcleo del monitor son **URLs fijas**: si una tienda mueve la ficha de la consola a otra URL, el
+monitor deja de verla ahí. Como red de contención existe el **buscador de cada tienda** (`STORE_SEARCH_PAGES`),
+que corre **cada 5 minutos** y no depende del índice de Bing (que va con horas o días de retraso):
+
+| Tienda | Buscador | Estado |
+|---|---|---|
+| Bestmart | `/search/suggest.json` (API de Shopify) | responde; hoy 0 candidatos (la consola ya no está en su catálogo) |
+| Falabella | `/falabella-cl/search?Ntt=zelda+40` | **2 fichas**: consola $819.990 y bundle con Ocarina of Time $899.990 |
+| Paris | `/paris.cl/search?q=zelda+40` | responde; hoy 0 candidatos extraíbles |
+| Mathogames | `/115-switch-2` (categoría) | **1 ficha**: preventa $749.990 |
+| Santo Games | `/santogames.cl/search?q=zelda` | responde; hoy 0 candidatos extraíbles |
+| Play Service | `/?s=zelda&post_type=product` | responde; hoy 0 candidatos extraíbles |
+
+**Filtros de seguridad** (para que no repita los falsos positivos del escaneo de catálogos):
+una ficha entra solo si (a) su título menciona Switch 2 + Zelda + 40º, (b) su precio cae en la banda de
+la consola ($500.000–$2.000.000) y (c) el precio es **de ese producto** (el del JSON de su propio ítem
+o el de su tarjeta), nunca el mínimo de la página. Así el estuche de $64.990 y el pro controller de
+$169.990 quedan fuera.
+
+TodoJuegos no expone un buscador legible (404) y la consola de Imperio Gamers no dice "40" en el título
+(ya está vigilada por su URL fija).
+
 ## 8. Troubleshooting
 
 | Síntoma | Causa probable | Dónde mirar |

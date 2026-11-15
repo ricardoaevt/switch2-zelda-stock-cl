@@ -789,6 +789,209 @@ function catalogProductCandidates(html, baseUrl) {
   return out;
 }
 
+// Buscador propio de cada tienda. Es la red que no depende del indice de
+// Bing: si la tienda cambia la URL de su ficha, el buscador la deleta al
+// instante. TodoJuegos no expone buscador legible y la consola de Imperio
+// Gamers no dice "40" en el titulo (su URL fija ya esta vigilada).
+const STORE_SEARCH_PAGES = [
+  { name: "Bestmart", kind: "shopify_json", url: "https://bestmart.cl/search/suggest.json?q=zelda%2040%20aniversario&resources[type]=product" },
+  { name: "Falabella", kind: "html", url: "https://www.falabella.com/falabella-cl/search?Ntt=zelda+40" },
+  { name: "Paris", kind: "html", url: "https://www.paris.cl/search?q=zelda+40" },
+  { name: "Mathogames", kind: "html", url: "https://www.mathogames.cl/115-switch-2" },
+  { name: "Santo Games", kind: "html", url: "https://www.santogames.cl/search?q=zelda" },
+  { name: "Play Service", kind: "html", url: "https://playservice.cl/?s=zelda&post_type=product" },
+];
+
+const CONSOLE_PRICE_MIN = 500000;
+const CONSOLE_PRICE_MAX = 2000000;
+
+function safeJson(text) {
+  try {
+    return JSON.parse(text);
+  } catch (_) {
+    return null;
+  }
+}
+
+/** Primer precio de un texto (no el minimo: la pagina tiene precios vecinos). */
+function firstPrice(text) {
+  const match = String(text || "").match(
+    /\$[\s.]*(\d{1,3}(?:[.\s]\d{3})+|\d{6,7})/,
+  );
+  // Sin banda: la banda de la consola la aplica quien decide si la ficha
+  // interesa (un accesorio de $169.990 no puede "prestarse" el precio de
+  // otro producto).
+  return match ? money(match[1], 0, Number.MAX_SAFE_INTEGER) : null;
+}
+
+/**
+ * Extrae fichas de la consola Zelda 40 de una pagina de resultados de busqueda.
+ *
+ * Cada resultado se evalua por separado (el vinculo, su texto y el bloque de
+ * texto que lo rodea), porque la pagina entera trae productos que no interesan.
+ * El precio debe caer en la banda de la consola: asi se descartan accesorios
+ * y juegos que comparten el mismo nombre.
+ */
+function searchProductCandidates(html, baseUrl) {
+  const out = [];
+  const seen = new Set();
+
+  for (const match of html.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]{0,600}?)<\/a>/gi)) {
+    const href = decodeHref(match[1] || "").trim();
+    if (!href || href.startsWith("#") || href.startsWith("javascript:")) continue;
+
+    let url;
+    try {
+      url = new URL(href, baseUrl);
+    } catch (_) {
+      continue;
+    }
+    if (!/^https?:$/.test(url.protocol)) continue;
+    url.hash = "";
+    const clean = url.toString();
+    if (seen.has(clean)) continue;
+
+    const window = normalize(
+      html.slice(Math.max(0, match.index - 300), match.index + 900),
+    );
+    if (!mentionsTargetConsole(window)) continue;
+
+    // El precio es el de esta ficha: primero el texto del vinculo y, si no
+    // alcanza, el de la tarjeta que lo sigue. Tomar el minimo de la ventana
+    // traeria el precio de un producto vecino.
+    const anchorText = normalize(match[2] || "");
+    const after = normalize(
+      html.slice(match.index + match[0].length, match.index + match[0].length + 600),
+    );
+    const price =
+      firstPrice(anchorText.replace(/\$\s+/g, "$")) ??
+      firstPrice(after.replace(/\$\s+/g, "$"));
+    if (!price || price < CONSOLE_PRICE_MIN || price > CONSOLE_PRICE_MAX) continue;
+
+    seen.add(clean);
+    out.push({
+      url: clean,
+      status: "available",
+      price_clp: price,
+      title: normalize(match[2] || "").slice(0, 120) || null,
+    });
+  }
+
+  // Segunda pasada: productos embebidos como JSON (Falabella, Shopify).
+  // El precio se toma del mismo objeto, despues de su url.
+  for (const match of html.matchAll(
+    /name(?:&quot;|"|\\")\s*:\s*(?:&quot;|"|\\")([^"<&]{3,160})/gi,
+  )) {
+    const name = decodeHref(match[1]).trim();
+    if (!mentionsTargetConsole(name)) continue;
+
+    const region = html.slice(match.index, match.index + 900);
+    const urlMatch = region.match(/url(?:&quot;|"|\\")\s*:\s*(?:&quot;|"|\\")([^"<&]+)/);
+    if (!urlMatch) continue;
+
+    const afterUrl = region.slice(urlMatch.index + urlMatch[0].length);
+    const priceMatch = afterUrl.match(/price(?:&quot;|"|\\")\s*:\s*(?:&quot;|"|\\")?([\d.]+)/);
+    if (!priceMatch) continue;
+
+    const price = money(priceMatch[1], 0, Number.MAX_SAFE_INTEGER);
+    if (!price || price < CONSOLE_PRICE_MIN || price > CONSOLE_PRICE_MAX) continue;
+
+    let url;
+    try {
+      url = new URL(decodeHref(urlMatch[1]), baseUrl);
+    } catch (_) {
+      continue;
+    }
+    url.hash = "";
+    const clean = url.toString();
+    if (seen.has(clean)) continue;
+
+    seen.add(clean);
+    out.push({
+      url: clean,
+      status: "available",
+      price_clp: price,
+      title: name,
+    });
+  }
+
+  return out;
+}
+
+/** Extrae fichas de la consola desde la API de sugerencias de Shopify. */
+function shopifySearchCandidates(payload, baseUrl) {
+  const out = [];
+  const products = payload?.resources?.results?.products || [];
+  for (const product of products) {
+    const title = String(product.title || "");
+    if (!mentionsTargetConsole(title)) continue;
+    const price = money(product.price);
+    if (!price || price < CONSOLE_PRICE_MIN || price > CONSOLE_PRICE_MAX) continue;
+    let url;
+    try {
+      url = new URL(product.url, baseUrl);
+    } catch (_) {
+      continue;
+    }
+    url.hash = "";
+    out.push({
+      url: url.toString(),
+      status: product.available ? "available" : "unavailable",
+      price_clp: price,
+      title,
+    });
+  }
+  return out;
+}
+
+async function inspectStoreSearches() {
+  const candidates = [];
+  const statuses = [];
+
+  for (const page of STORE_SEARCH_PAGES) {
+    try {
+      const r = await fetchExternal(page.url, {
+        redirect: "follow",
+        headers: {
+          "user-agent": USER_AGENT,
+          "accept-language": "es-CL,es;q=0.9",
+          accept: page.kind === "shopify_json" ? "application/json" : "text/html",
+        },
+      });
+
+      if (!r.ok) {
+        statuses.push(`${page.name}:http_${r.status}`);
+        continue;
+      }
+
+      const body = await r.text();
+      const found =
+        page.kind === "shopify_json"
+          ? shopifySearchCandidates(safeJson(body), page.url)
+          : searchProductCandidates(body, page.url);
+
+      for (const candidate of found) {
+        candidates.push({
+          ...candidate,
+          name: `${page.name} · búsqueda`,
+          http: 200,
+          retailer: page.name,
+          source: "store_search",
+        });
+      }
+
+      statuses.push(`${page.name}:${found.length ? "candidate_" + found.length : "not_found"}`);
+    } catch (_) {
+      statuses.push(`${page.name}:fetch_error`);
+    }
+  }
+
+  return {
+    monitor_status: statuses.join("+") || "not_checked",
+    candidates,
+  };
+}
+
 async function inspectRetailerCatalogs() {
   const candidates = [];
   const statuses = [];
@@ -1493,17 +1696,28 @@ async function runMonitor(env, scheduledTime = Date.now(), forceDiscovery = fals
   const discoveryRan = forceDiscovery || minute % 15 === 0;
   const socialRan = forceDiscovery || minute % 5 === 0;
   const retailerScanRan = forceDiscovery || minute % 2 === 0;
+  const storeSearchRan = forceDiscovery || minute % 5 === 0;
   const zelda40CaseScanRan = forceDiscovery || minute % 5 === 0;
   let zonaGamerResult = "not_checked";
   let retailerCatalogResult = "not_checked";
+  let storeSearchResult = "not_checked";
   let zelda40CaseResult = "not_checked";
   let zelda40CaseNew = 0;
 
-  if (retailerScanRan) {
-    const catalog = await inspectRetailerCatalogs();
+  if (retailerScanRan || storeSearchRan) {
+    const catalog = retailerScanRan
+      ? await inspectRetailerCatalogs()
+      : { monitor_status: "not_checked", candidates: [] };
     retailerCatalogResult = catalog.monitor_status;
 
-    for (const current of catalog.candidates) {
+    // El buscador de cada tienda es la red que no depende del indice de Bing:
+    // si la tienda mueve la URL de su ficha, aparece aca de inmediato.
+    const search = storeSearchRan
+      ? await inspectStoreSearches()
+      : { monitor_status: "not_checked", candidates: [] };
+    storeSearchResult = search.monitor_status;
+
+    for (const current of [...catalog.candidates, ...search.candidates]) {
       const old = state.stores[current.url]?.snapshot || null;
       const snapshot = {
         http: current.http,
@@ -1792,6 +2006,7 @@ async function runMonitor(env, scheduledTime = Date.now(), forceDiscovery = fals
     skipped_stores: skippedStores,
     mercado_libre: mercadoLibreResult,
     retailer_catalogs: retailerCatalogResult,
+    store_searches: storeSearchResult,
     retailer_scan_ran: retailerScanRan,
     zona_gamer: zonaGamerResult,
     social_ran: socialRan,
