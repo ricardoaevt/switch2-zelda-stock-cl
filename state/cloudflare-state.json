@@ -81,6 +81,66 @@
         "title": "Preventa Nintendo Switch 2 Edicion The Legend Of Zelda – Imperio Gamers"
       },
       "last_changed_at": "2026-11-15T15:19:53.900Z"
+    },
+    "https://www.falabella.com/falabella-cl/product/143211057/Nintendo-Switch-Lite-Consola-Turquesa": {
+      "name": "Falabella · catálogo",
+      "snapshot": {
+        "http": 200,
+        "status": "available",
+        "price_clp": 559990,
+        "title": null
+      },
+      "last_changed_at": "2026-11-15T15:22:53.900Z"
+    },
+    "https://www.falabella.com/falabella-cl/product/159555264/consola-nintendo-switch-2-256gb-the-legend-of-zelda-40-aniversario-edicion-especial": {
+      "name": "Falabella · catálogo",
+      "snapshot": {
+        "http": 200,
+        "status": "available",
+        "price_clp": 559990,
+        "title": null
+      },
+      "last_changed_at": "2026-11-15T15:22:53.900Z"
+    },
+    "https://www.falabella.com/falabella-cl/product/158693085/consola-nintendo-switch-2-ea-sports-fc-27-bundle": {
+      "name": "Falabella · catálogo",
+      "snapshot": {
+        "http": 200,
+        "status": "available",
+        "price_clp": 559990,
+        "title": null
+      },
+      "last_changed_at": "2026-11-15T15:22:53.900Z"
+    },
+    "https://www.falabella.com/falabella-cl/product/80872527/consola-nintendo-switch-2-neon-blue-neon-red": {
+      "name": "Falabella · catálogo",
+      "snapshot": {
+        "http": 200,
+        "status": "available",
+        "price_clp": 559990,
+        "title": null
+      },
+      "last_changed_at": "2026-11-15T15:22:53.900Z"
+    },
+    "https://www.falabella.com/falabella-cl/product/152033535/reanimal-deluxe-edition-eu-nintendo-switch-2": {
+      "name": "Falabella · catálogo",
+      "snapshot": {
+        "http": 200,
+        "status": "available",
+        "price_clp": 559990,
+        "title": null
+      },
+      "last_changed_at": "2026-11-15T15:22:53.900Z"
+    },
+    "https://www.falabella.com/falabella-cl/product/159672239/nintendo-switch-2-the-legend-of-zelda-40th-anniversary-edition": {
+      "name": "Falabella · catálogo",
+      "snapshot": {
+        "http": 200,
+        "status": "available",
+        "price_clp": 559990,
+        "title": null
+      },
+      "last_changed_at": "2026-11-15T15:22:53.900Z"
     }
   },
   "discovered": {},
@@ -123,43 +183,6 @@
     }
   },
   "zelda40_case_discovered": {},
-  "pending_available": {
-    "https://www.falabella.com/falabella-cl/product/143211057/Nintendo-Switch-Lite-Consola-Turquesa": {
-      "count": 1,
-      "signature": "{\"status\":\"available\",\"price_clp\":559990,\"title\":null}",
-      "first_seen_at": "2026-11-15T15:20:53.900Z",
-      "last_seen_at": "2026-11-15T15:20:53.900Z"
-    },
-    "https://www.falabella.com/falabella-cl/product/159555264/consola-nintendo-switch-2-256gb-the-legend-of-zelda-40-aniversario-edicion-especial": {
-      "count": 1,
-      "signature": "{\"status\":\"available\",\"price_clp\":559990,\"title\":null}",
-      "first_seen_at": "2026-11-15T15:20:53.900Z",
-      "last_seen_at": "2026-11-15T15:20:53.900Z"
-    },
-    "https://www.falabella.com/falabella-cl/product/158693085/consola-nintendo-switch-2-ea-sports-fc-27-bundle": {
-      "count": 1,
-      "signature": "{\"status\":\"available\",\"price_clp\":559990,\"title\":null}",
-      "first_seen_at": "2026-11-15T15:20:53.900Z",
-      "last_seen_at": "2026-11-15T15:20:53.900Z"
-    },
-    "https://www.falabella.com/falabella-cl/product/80872527/consola-nintendo-switch-2-neon-blue-neon-red": {
-      "count": 1,
-      "signature": "{\"status\":\"available\",\"price_clp\":559990,\"title\":null}",
-      "first_seen_at": "2026-11-15T15:20:53.900Z",
-      "last_seen_at": "2026-11-15T15:20:53.900Z"
-    },
-    "https://www.falabella.com/falabella-cl/product/152033535/reanimal-deluxe-edition-eu-nintendo-switch-2": {
-      "count": 1,
-      "signature": "{\"status\":\"available\",\"price_clp\":559990,\"title\":null}",
-      "first_seen_at": "2026-11-15T15:20:53.900Z",
-      "last_seen_at": "2026-11-15T15:20:53.900Z"
-    },
-    "https://www.falabella.com/falabella-cl/product/159672239/nintendo-switch-2-the-legend-of-zelda-40th-anniversary-edition": {
-      "count": 1,
-      "signature": "{\"status\":\"available\",\"price_clp\":559990,\"title\":null}",
-      "first_seen_at": "2026-11-15T15:20:53.900Z",
-      "last_seen_at": "2026-11-15T15:20:53.900Z"
-    }
-  },
+  "pending_available": {},
   "social_discovered": {}
 }
