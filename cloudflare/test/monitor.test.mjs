@@ -429,3 +429,45 @@ test("el escaneo de catalogos encuentra la consola Zelda 40 en el JSON embebido"
     globalThis.fetch = originalFetch;
   }
 });
+
+// S16: regresion. En la misma coleccion conviven otras consolas y accesorios:
+// el escaneo no debe tomarlos por la consola Zelda 40.
+test("el escaneo de catalogos ignora las otras consolas de la misma pagina", async () => {
+  const page = `<!doctype html>
+<html><head><title>Nintendo Switch 2</title></head>
+<body>
+<div class="card">
+  <h3>Nintendo Switch Lite Consola Turquesa</h3>
+  <p>$ 199.990</p>
+  <a href="javascript:void(0)">agregar al carro</a>
+</div>
+<div class="card">
+  <h3>Nintendo Consola Switch 2 256GB The Legend of Zelda 40 . Version Global Original</h3>
+  <p>por pocketzonecl</p>
+  <p>$ 819.990 -20% $ 829.990</p>
+  <a href="javascript:void(0)">agregar al carro</a>
+</div>
+<script type="application/json">{&quot;@type&quot;:&quot;ListItem&quot;,&quot;item&quot;:{&quot;@type&quot;:&quot;Product&quot;,&quot;name&quot;:&quot;Nintendo Switch Lite Consola Turquesa&quot;,&quot;url&quot;:&quot;https://www.falabella.com/falabella-cl/product/143211057/Nintendo-Switch-Lite-Consola-Turquesa&quot;}},{&quot;@type&quot;:&quot;ListItem&quot;,&quot;item&quot;:{&quot;@type&quot;:&quot;Product&quot;,&quot;name&quot;:&quot;Consola Switch 2 256GB The Legend of Zelda 40 . Version Global Original&quot;,&quot;url&quot;:&quot;https://www.falabella.com/falabella-cl/product/159555264/consola-nintendo-switch-2-256gb-the-legend-of-zelda-40-aniversario-edicion-especial&quot;}}</script>
+</body></html>`;
+
+  const { stub, calls } = makeFetch({ page });
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = stub;
+
+  try {
+    await runMonitor(ENV, SCHEDULED_CATALOG_TIME, false);
+    const saved = decodeSavedState(calls.statePuts[0]);
+    const found = Object.keys(saved.retailer_discovered || {});
+
+    assert.ok(
+      found.some((u) => u.includes("159555264")),
+      "debe encontrar la consola Zelda 40",
+    );
+    assert.ok(
+      !found.some((u) => u.includes("143211057")),
+      "no debe tomar la Switch Lite por la consola Zelda 40",
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

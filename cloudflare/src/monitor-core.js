@@ -696,6 +696,21 @@ function catalogProductCandidates(html, baseUrl) {
   const out = [];
   const seen = new Set();
 
+  // Nombres de producto declarados en el JSON embebido. Solo nos interesan
+  // los que son la consola Zelda 40: en la misma coleccion conviven otras
+  // consolas y accesorios que no vigila este monitor.
+  const names = [];
+  for (const match of html.matchAll(
+    /name(?:&quot;|"|\\")\s*:\s*(?:&quot;|"|\\")([^"<&]{3,160})/gi,
+  )) {
+    const name = decodeHref(match[1]).trim();
+    if (!mentionsTargetConsole(name)) continue;
+    names.push({ name, index: match.index });
+  }
+  if (!names.length) return out;
+
+  // Cada URL se empareja con el nombre que la precede: en el JSON de
+  // Falabella el nombre y la url del mismo producto van juntos.
   const urls = [];
   for (const match of html.matchAll(CATALOG_PRODUCT_URL)) {
     const raw = decodeHref(match[0]).trim();
@@ -709,13 +724,17 @@ function catalogProductCandidates(html, baseUrl) {
     url.hash = "";
     const clean = url.toString();
     if (seen.has(clean)) continue;
-    const context = html.slice(Math.max(0, match.index - 1500), match.index + 1500);
-    if (!mentionsTargetConsole(context)) continue;
+    const owner = names
+      .filter((n) => n.index < match.index && match.index - n.index < 600)
+      .pop();
+    if (!owner) continue;
     seen.add(clean);
-    urls.push(clean);
+    urls.push({ url: clean, name: owner.name });
   }
   if (!urls.length) return out;
 
+  // Disponibilidad y precio: del bloque visible del producto, donde la grilla
+  // muestra el boton de compra junto al titulo.
   const visible = normalize(html);
   const blocks = [];
   for (const match of visible.matchAll(/switch\s*2.{0,200}?zelda.{0,120}?40/gi)) {
@@ -724,15 +743,17 @@ function catalogProductCandidates(html, baseUrl) {
   }
   if (!blocks.length) return out;
 
-  for (const url of urls) {
-    const block = blocks[0];
+  // El orden del JSON y el de la grilla es el mismo, asi que se emparejan por
+  // posicion.
+  for (let i = 0; i < urls.length && i < blocks.length; i++) {
+    const block = blocks[i];
     const status = availabilityStatus(block, null, 200);
     if (status === "unknown") continue;
     out.push({
-      url,
+      url: urls[i].url,
       status,
       price_clp: fallbackPrice(block.replace(/\$\s+/g, "$")),
-      title: null,
+      title: urls[i].name,
     });
   }
   return out;
