@@ -19,11 +19,11 @@ Implementar en este repositorio el monitor de stock de la consola *Nintendo Swit
 
 | ID | Specs | Route | Commit |
 |---|---|---|---|
-| T1 | S4, S5 | inline — copiar motor, dispatcher, runner, workflows y estado desde upstream | `feat: base del monitor Switch 2 Zelda 40th (Cloudflare Worker)` |
-| T2 | S6, S7 | inline — parametrizar owner/repo/usuario notificado y reiniciar la línea base | `chore: parametrizar identidad del monitor y reiniciar línea base` |
-| T3 | S8 | inline — tests offline con `node:test` sobre `runMonitor` con `fetch` simulado | `test: cubrir línea base, transición de stock y desafío anti-bot` |
-| T4 | S9, S10 | inline — README de puesta en marcha + scripts de configuración y deploy | `docs: guía de puesta en marcha del monitor y script de configuración` |
-| T5 | S8, S9 | inline — verificación final (tests + `node --check`) y commit inicial | `chore: verificación final del monitor Switch 2 Zelda 40th` |
+| T1 | S4, S5 | inline — copiar motor, dispatcher, runner, workflows y estado desde upstream | `ffb9a79` |
+| T2 | S6, S7 | inline — parametrizar owner/repo/usuario notificado y reiniciar la línea base | `ffb9a79` |
+| T3 | S8 | inline — tests offline con `node:test` sobre `runMonitor` con `fetch` simulado | `00d6fd5` |
+| T4 | S9, S10 | inline — README de puesta en marcha + scripts de configuración y deploy | `5586f40` |
+| T5 | S8, S9 | inline — verificación final (tests + `node --check`) y commit inicial | `5586f40` |
 
 ## Log
 
@@ -31,3 +31,6 @@ Implementar en este repositorio el monitor de stock de la consola *Nintendo Swit
 - **L2** — Respuesta inicial: explicación de arquitectura (dos rutas: Python/Actions legacy vs Cloudflare Worker activa), lógica de estado diff-based y baseline, anti-bot, JSON-LD + fallback, alertas accionables, filtro de precio 500.000–2.000.000 CLP, discovery vía Bing RSS, tratamiento especial de Mercado Libre Tienda Oficial Nintendo, y costo de Actions vs Cloudflare.
 - **L3** — Decisiones del humano: ruta "Cloudflare Worker (completa)" (S2) y ubicación "…/IA/switch2-zelda-stock-cl" (S3).
 - **L4** — Entorno verificado: `gh` CLI ausente, `wrangler` no instalado, sin credenciales de Cloudflare en el entorno, Node v24.11.1 y Python 3.12.3 disponibles. Los pasos que requieren cuentas externas (crear el repo, `wrangler deploy`, secrets) quedan documentados como pasos manuales para el humano.
+- **L5** — T1 y T2 completados: motor y workflows copiados de upstream, identidad parametrizada (`GITHUB_OWNER`/`GITHUB_REPO` en `wrangler.jsonc`, `NOTIFY_USER` opcional, `GITHUB_REPOSITORY` obligatorio en el runner) y línea base reiniciada (`state/cloudflare-state.json` con `initialized: false`). Sin rastros de `jsantiscl` ni del usuario de notificación del upstream.
+- **L6** — T3 completado: 5 tests offline en verde. Descubrimiento relevante: el motor **exige dos lecturas consecutivas** de "disponible" antes de alertar (`state.pending_available`), por lo que la primera corrida con stock no abre Issue sino que deja la confirmación pendiente. El test quedó escrito contra esa regla real.
+- **L7** — T4 y T5 completados: README con puesta en marcha, script `configure-owner.mjs`, `.gitignore`, `npm test` / `npm run check`. Verificación: 5/5 tests en verde, `node --check` sin errores en los tres módulos, los 4 workflows parsean como YAML válido. Commits `ffb9a79`, `00d6fd5`, `5586f40` en `main`.
