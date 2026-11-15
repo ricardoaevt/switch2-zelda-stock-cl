@@ -26,7 +26,7 @@ Implementar en este repositorio el monitor de stock de la consola *Nintendo Swit
 | T4 | S9, S10 | inline — README de puesta en marcha + scripts de configuración y deploy | `5586f40` |
 | T5 | S8, S9 | inline — verificación final (tests + `node --check`) y commit inicial | `5586f40` |
 | T6 | S9, S10 | inline — desplegar el Worker (import desde dashboard), documentar la vía dashboard y verificar el circuito en vivo | `f9d7684` |
-| T7 | S11 | inline — escribir `MANUAL.md` (modelo mental, protocolos, reglas del monitor, costos y límites, estado de fuentes, troubleshooting, glosario) y enlazarlo desde el README | `TBD` |
+| T7 | S11 | inline — escribir `MANUAL.md` (modelo mental, protocolos, reglas del monitor, costos y límites, estado de fuentes, troubleshooting, glosario) y enlazarlo desde el README | `414c3ca` |
 
 ## Log
 
