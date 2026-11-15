@@ -9,6 +9,55 @@ qué hacer cuando se rompe. El [README](README.md) queda como guía de instalaci
 
 ---
 
+## 0. Instalación desde cero (checklist)
+
+Para replicar esta solución completa, en este orden:
+
+**A. Cuentas y credenciales**
+- [ ] GitHub: una cuenta con un repo **público** (el público es lo que hace gratuit Actions).
+- [ ] GitHub → *Settings → Developer settings → Fine-grained tokens → New*:
+      - Repository access: *Only select repositories* → el repo del monitor.
+      - Repository permissions: `Contents: Read and write` · `Issues: Read and write`.
+      - El mismo token lo usan **el Worker** (secret `GITHUB_TOKEN`) y **Actions** (el `GITHUB_TOKEN` automático del repo ya sirve).
+- [ ] Cloudflare: una cuenta (plan gratuito alcanza) con permisos para crear Workers.
+- [ ] Telegram (opcional pero recomendado): @BotFather → `/newbot` → token.
+
+**B. Repo**
+```bash
+gh repo create <nombre> --public --source=. --push
+```
+El repo debe quedar con: `cloudflare/` (motor, worker, runner, tests), `.github/workflows/`, `state/` y `README.md` + `MANUAL.md`.
+
+**C. Identidad**
+```bash
+cd cloudflare && npm install
+npm run configure -- <TU-USUARIO-GITHUB> <nombre-del-repo>   # deja GITHUB_OWNER/GITHUB_REPO en wrangler.jsonc
+```
+
+**D. Worker (dashboard)**
+- [ ] Workers & Pages → **Create** → **Import from GitHub** → el repo.
+- [ ] Root directory `cloudflare` · Build command `npm install` · Deploy command `npx wrangler deploy`.
+- [ ] Deploy.
+- [ ] En el Worker → *Settings → Variables and Secrets* → **`GITHUB_TOKEN`** (tipo *Secret*) = el PAT del punto A.
+- [ ] Opcional: `RUN_TOKEN` (secret) para el disparo manual por HTTP.
+
+**E. Telegram (opcional)**
+- [ ] `gh secret set TELEGRAM_BOT_TOKEN` (el token de @BotFather).
+- [ ] Agregar el bot al grupo destino.
+- [ ] `gh workflow run telegram-setup.yml` → leer el **Chat ID** en el Summary.
+- [ ] `gh secret set TELEGRAM_CHAT_ID` con ese número.
+- [ ] `gh workflow run telegram-tools.yml -f action=enviar_prueba` → debe llegar el mensaje.
+
+**F. Primera corrida**
+- [ ] El cron dispara a los 60 s: en *Actions* aparece `🤖 Cloudflare → GitHub`.
+- [ ] La **primera** corrida solo arma la línea base (0 alertas) y el bot commitea el estado.
+- [ ] Verificar: `curl -s https://<worker>.workers.dev/health` → `"ok": true` y `"github_token_configured": true`.
+
+**G. Rotar credenciales expuestas**
+- [ ] Si el token del bot quedó en un chat o log: @BotFather → `/revoke` → actualizar el secret del repo.
+
+---
+
 ## Ruta rápida
 
 Si algo no funciona, este es el orden de verificación:
@@ -450,3 +499,92 @@ el mensaje es el runner de Actions. Si falta el secret, el monitor **no se rompe
 
 **Créditos:** implementación derivada de
 [`jsantiscl/switch2-zelda-stock-cl`](https://github.com/jsantiscl/switch2-zelda-stock-cl).
+
+## 12. Adaptar el monitor a otro producto
+
+La **arquitectura es agnóstica**: Worker + cron + dispatch + estado en git + alertas por Issue/Telegram
+sirven para cualquier producto. Lo que cambia es **qué se busca**. Esta es la lista completa de lo que
+hay que tocar, con el archivo y la constante donde vive cada cosa:
+
+| Qué | Dónde | Qué cambiar |
+|---|---|---|
+| **Tokens que identifican la ficha** | `target40Nearby()` en `cloudflare/src/monitor-core.js` | Hoy exige `switch 2` + `zelda` + `40/40th/40º` (o la variante `edición Zelda` + `preventa` + `consola`). Para otro producto, reescribir esos patrones — es **el** punto que más conviene generalizar |
+| **Variante laxa** | `mentionsTargetConsole()` | Usa `switch 2` + `zelda` + `40`. Se usa para las fichas embebidas en JSON. Cambiar los tokens acá también |
+| **Banda de precio** | `money()` (por defecto `500000..2000000`), `CONSOLE_PRICE_MIN`/`CONSOLE_PRICE_MAX` | La banda evita confundir la consola con juegos y accesorios. Para otro producto, recalcularla con precios reales |
+| **Señales de compra / agotado** | `PURCHASE_SIGNALS`, `NEGATIVE` | Learned the hard way: Chile usa **"agregar al carro"** y **"agregar al carrito"**. Revisar las dos variantes locales |
+| **Fichas fijas** | `STORES` | Un objeto por tienda: `{ name, url }` con la URL **de producto** (no de categoría) |
+| **Buscadores por tienda** | `STORE_SEARCH_PAGES` | `{ name, kind, url }` con `kind` = `html` o `shopify_json` |
+| **Catálogos de retailer** | `RETAILER_WATCH_PAGES` | `{ name, url }` de la página que lista el producto |
+| **Consultas de descubrimiento web** | `discoverNewStores()` (18 queries) | Reescribir con los términos del nuevo producto; el filtro `.cl` y las reglas de aceptación se mantienen |
+| **Dominios de marketplace** | `ML_STORE_URL` y el bloque de Mercado Libre en `runMonitor` | Si el producto aparece en marketplaces con su propia tienda oficial |
+| **Texto de las alertas** | `describe()` en `monitor-core.js` y los títulos del Issue | Hoy dicen "STOCK / PREVENTA DISPONIBLE" y "Nueva publicación" |
+| **Estado** | `state/cloudflare-state.json` | Al cambiar de producto, **empezar de cero**: borrar el archivo → la próxima corrida reconstruye la línea base sin alertas falsas |
+| **Identidad del Worker** | `wrangler.jsonc` (`name`, `vars`) y el nombre del repo | `npm run configure -- <owner> <repo>` |
+| **Tests** | `cloudflare/test/monitor.test.mjs` | Los fixtures usan el producto actual (URL de Mathogames, id de Falabella `159555264`, rutas `/333/`). Hay que reescribirlos con el nuevo producto **y volver a verlos fallar (RED) antes de implementar** |
+
+### Lo que NO hay que tocar
+
+La cadena de disparo (`index.js` → `repository_dispatch` → `cloudflare-dispatch.yml` → `run-monitor.mjs`),
+el formato del estado, la lógica de confirmación (dos lecturas), el manejo de `error`/`unknown` y los
+canales de alerta (Issue + Telegram) **son los mismos** para cualquier producto.
+
+### Receta de alto nivel
+
+1. Definí el producto: **nombre exacto** como aparece en las tiendas, **variantes** de escritura
+   ("40th" / "40.º" / "40 aniversario" / "edición Zelda"), **banda de precio** y **señales de stock**.
+2. Armá la lista de fichas: buscá cada tienda, verificá la URL con un request real (200 + el texto del
+   producto) y anotá si el precio se lee del JSON-LD, de un JSON embebido o del texto.
+3. Escribí los tests con el producto nuevo (RED), implementá (GREEN), corré la suite.
+4. Desplegá y dejá correr una hora mirando el Summary: lo que aparece en `unknown` o `error` es lo que
+   falta ajustar.
+
+## 13. Recetas de mantenimiento
+
+### Agregar una tienda fija
+```js
+// cloudflare/src/monitor-core.js → STORES
+{
+  name: "Mi Tienda",
+  url: "https://mitienda.cl/producto/consola-switch-2-zelda-40",
+},
+```
+Antes de agregarla, verificá con un `curl` que la URL responde **200** y que el texto trae el nombre del
+producto. Si el precio no se lee, el motor lo dejará en `null` (no es fatal: avisa igual).
+
+### Agregar un retailer al escaneo de catálogos
+```js
+// RETAILER_WATCH_PAGES
+{ name: "Mi Retailer", url: "https://mi-retailer.cl/collection/nintendo-switch-2" },
+```
+El extractor ya lee la ficha si está en un `<a href>` **o** en un JSON embebido con `name`/`url`/`price`.
+Si el retailer expone el producto de otra forma, hay que extender `catalogProductCandidates()`.
+
+### Agregar el buscador de una tienda
+```js
+// STORE_SEARCH_PAGES
+{ name: "Mi Tienda", kind: "html", url: "https://mitienda.cl/search?q=zelda+40" },
+```
+`kind: "shopify_json"` para tiendas Shopify (devuelve `resources.results.products[]`).
+
+### Cambiar la banda de precio
+`money()` (por defecto $500.000–$2.000.000) y `CONSOLE_PRICE_MIN`/`CONSOLE_PRICE_MAX` (banda de las fichas
+embebidas). **Ojo**: `money()` filtra por banda, así que para *parsear* un precio suelto hay que llamar
+`money(v, 0, Number.MAX_SAFE_INTEGER)` y filtrar aparte.
+
+### Cambiar la ventana de confirmación
+En `runMonitor`, el `if (count < 2) continue;` exige dos lecturas. Con `count < 3` serían tres.
+
+### Reiniciar el estado
+Borrar `state/cloudflare-state.json` → la próxima corrida reconstruye la línea base **sin** generar
+alertas. **No lo commitees a mano**: el bot escribe ese archivo cada 1-2 minutos y el rebase choca.
+
+### Cambiar la cadencia
+`cloudflare/wrangler.jsonc` → `triggers.crons` → `"*/2 * * * *"` (2 minutos) y hacer push (Cloudflare
+reconstruye y re-registra el cron). Recordar: con `*/3` la búsqueda amplia pasa a cada 30 minutos,
+porque su cadencia interna depende del minuto del reloj.
+
+### Cambiar el canal de alertas
+- **Issue**: se abre en el repo del monitor y se asigna a `GITHUB_OWNER` (o a `NOTIFY_USER`, variable del repo).
+- **Telegram**: `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` como secrets **del repo** (no del Worker:
+  quien manda el mensaje es el runner de Actions). El id del grupo se obtiene del evento
+  `my_chat_member` al agregar el bot.
