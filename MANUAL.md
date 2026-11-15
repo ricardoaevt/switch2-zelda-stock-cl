@@ -288,6 +288,7 @@ vacíe.
 | Se perdió el estado | Borrá `state/cloudflare-state.json`: la próxima corrida reconstruye la línea base **sin** alertas falsas. |
 | Conflicto de escritura (409) | Dos dispatchers escribiendo a la vez. Dejá uno solo (§2.5). |
 | El motor cambió | Push → la próxima corrida ya lo usa (no requiere redesplegar Cloudflare: el motor se baja en runtime). `index.js` sí requiere redeploy. |
+| `state/cloudflare-state.json` | **Es del bot**: lo escribe cada 1-2 minutos. Un commit humano que lo toque choca con el rebase. Para corregirlo, hacelo en una corrida del bot, no en un commit |
 | `index.js` cambió | Push → Cloudflare rebuilds y redespliega (build-on-push). |
 
 ---
@@ -354,6 +355,8 @@ varias fuentes no podían funcionar y que **Falabella tenía la consola disponib
 | **`PURCHASE_SIGNALS` no incluía "agregar al carro"** (el texto que usa Falabella; el motor solo conocía "agregar al carrito") | **Corregido**: "agregar al carro", "añadir al carro" y "anadir al carro" ahora cuentan como señal de compra |
 | **Ripley** 403, **Lider** 14 KB (render por JS) y **Sniper** sin la consola | **Fuera de la lista de catálogos**: solo queda Falabella |
 | **Zona Gamer Iquique**: la página de Facebook responde 400 y el espejo público no resuelve | Las dos fuentes directas se retiran; queda solo el **respaldo por búsqueda web** (cada 15 min) |
+| El escaneo de catálogos tomaba **6 productos** en vez de 1 (la ventana de contexto de cada URL incluía el JSON completo de la colección) | Cada URL se empareja con **su propio nombre** en el JSON: solo entran las fichas que son la consola |
+| El precio de la consola en Falabella salía **$559.990** (el mínimo de la página, de otro producto) | El precio se lee del **propio ítem en el JSON** ($819.990) y cada producto se empareja con el bloque visible que más tokens distintivos comparte con su nombre |
 
 **Sobre Paris (marketplace):** la ficha dice "vendido por Paris" y el botón "comprar ahora" está
 presente de forma estable (10 de 10 lecturas en 40 s), pero el stock depende del vendedor: el sitio
