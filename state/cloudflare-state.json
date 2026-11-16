@@ -1,7 +1,14 @@
 {
   "discovered": {},
   "initialized": true,
-  "pending_available": {},
+  "pending_available": {
+    "https://www.falabella.com/falabella-cl/product/160112135/pack-nintendo-switch-2-256gb-zelda-40-aniversario-ocarina-of-time-estuche-hong-kong": {
+      "count": 1,
+      "signature": "{\"status\":\"available\",\"price_clp\":999980,\"title\":\"Pack Switch 2 256GB Zelda 40 Aniversario (Hong Kong) + Ocarina of Time (Japon) + Estuche\"}",
+      "first_seen_at": "2026-11-16T08:20:53.900Z",
+      "last_seen_at": "2026-11-16T08:20:53.900Z"
+    }
+  },
   "retailer_discovered": {
     "https://www.falabella.com/falabella-cl/product/159555264/consola-nintendo-switch-2-256gb-the-legend-of-zelda-40-aniversario-edicion-especial": {
       "found_at": "2026-11-15T15:20:53.900Z",
@@ -26,6 +33,12 @@
       "url": "https://www.mathogames.cl/consolas-switch-2/2576-preventa-consola-nintendo-switch-2-the-legend-of-zelda-40th-anniversary-singapur-version.html",
       "retailer": "Mathogames",
       "found_at": "2026-11-15T17:10:53.900Z"
+    },
+    "https://www.falabella.com/falabella-cl/product/160112135/pack-nintendo-switch-2-256gb-zelda-40-aniversario-ocarina-of-time-estuche-hong-kong": {
+      "name": "Falabella · búsqueda",
+      "url": "https://www.falabella.com/falabella-cl/product/160112135/pack-nintendo-switch-2-256gb-zelda-40-aniversario-ocarina-of-time-estuche-hong-kong",
+      "retailer": "Falabella",
+      "found_at": "2026-11-16T08:20:53.900Z"
     }
   },
   "social_discovered": {},
