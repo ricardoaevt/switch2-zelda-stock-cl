@@ -1,7 +1,14 @@
 {
   "discovered": {},
   "initialized": true,
-  "pending_available": {},
+  "pending_available": {
+    "https://www.mathogames.cl/consolas-switch-2/2576-preventa-consola-nintendo-switch-2-the-legend-of-zelda-40th-anniversary-singapur-version.html": {
+      "count": 1,
+      "signature": "{\"status\":\"available\",\"price_clp\":749990,\"title\":\"PREVENTA / Consola Nintendo Switch 2 – The Legend of Zelda 40th Anniversary Singapur Version\"}",
+      "first_seen_at": "2026-11-24T02:20:53.900Z",
+      "last_seen_at": "2026-11-24T02:20:53.900Z"
+    }
+  },
   "retailer_discovered": {
     "https://www.falabella.com/falabella-cl/product/159555264/consola-nintendo-switch-2-256gb-the-legend-of-zelda-40-aniversario-edicion-especial": {
       "found_at": "2026-11-15T15:20:53.900Z",
