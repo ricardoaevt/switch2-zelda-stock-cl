@@ -1,14 +1,7 @@
 {
   "discovered": {},
   "initialized": true,
-  "pending_available": {
-    "https://www.falabella.com/falabella-cl/product/160502306/pack-nintendo-switch-2-256gb-zelda-40-aniv-control-pro-ocarina-of-time": {
-      "count": 1,
-      "signature": "{\"status\":\"available\",\"price_clp\":1093970,\"title\":\"Pack Switch 2 256GB Zelda 40 Aniv. + Control Pro + Ocarina of Time\"}",
-      "first_seen_at": "2026-11-24T19:30:53.900Z",
-      "last_seen_at": "2026-11-24T19:30:53.900Z"
-    }
-  },
+  "pending_available": {},
   "retailer_discovered": {
     "https://www.falabella.com/falabella-cl/product/159555264/consola-nintendo-switch-2-256gb-the-legend-of-zelda-40-aniversario-edicion-especial": {
       "found_at": "2026-11-15T15:20:53.900Z",
@@ -168,6 +161,16 @@
         "title": "Pack Switch 2 256GB Zelda 40 Aniversario (Hong Kong) + Ocarina of Time (Japon) + Estuche"
       },
       "last_changed_at": "2026-11-16T08:25:53.900Z"
+    },
+    "https://www.falabella.com/falabella-cl/product/160502306/pack-nintendo-switch-2-256gb-zelda-40-aniv-control-pro-ocarina-of-time": {
+      "name": "Falabella · búsqueda",
+      "snapshot": {
+        "http": 200,
+        "status": "available",
+        "price_clp": 1093970,
+        "title": "Pack Switch 2 256GB Zelda 40 Aniv. + Control Pro + Ocarina of Time"
+      },
+      "last_changed_at": "2026-11-24T19:35:53.900Z"
     }
   },
   "version": 1,
