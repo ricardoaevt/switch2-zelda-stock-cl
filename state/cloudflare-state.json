@@ -1,7 +1,14 @@
 {
   "discovered": {},
   "initialized": true,
-  "pending_available": {},
+  "pending_available": {
+    "https://www.santogames.cl/nintendo-switch-2-the-legend-of-zelda-40%C2%BA-aniversario": {
+      "count": 1,
+      "signature": "{\"status\":\"available\",\"price_clp\":699990,\"title\":\"(RESERVA) Nintendo Switch 2 – The Legend of Zelda 40.º Aniversario\"}",
+      "first_seen_at": "2026-11-24T16:02:53.900Z",
+      "last_seen_at": "2026-11-24T16:02:53.900Z"
+    }
+  },
   "retailer_discovered": {
     "https://www.falabella.com/falabella-cl/product/159555264/consola-nintendo-switch-2-256gb-the-legend-of-zelda-40-aniversario-edicion-especial": {
       "found_at": "2026-11-15T15:20:53.900Z",
@@ -51,10 +58,10 @@
       "snapshot": {
         "http": 200,
         "status": "unavailable",
-        "price_clp": 689990,
+        "price_clp": null,
         "title": "Preventa Consola Nintendo Switch 2 – The Legend of Zelda 40th Anniversary &#8211; Play Service Talca &#8211; Videojuegos y consolas"
       },
-      "last_changed_at": "2026-11-24T16:01:53.900Z"
+      "last_changed_at": "2026-11-24T16:02:53.900Z"
     },
     "https://www.falabella.com/falabella-cl/product/159555264/consola-nintendo-switch-2-256gb-the-legend-of-zelda-40-aniversario-edicion-especial": {
       "name": "Falabella · catálogo",
