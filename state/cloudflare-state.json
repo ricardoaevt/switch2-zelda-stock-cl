@@ -1,14 +1,7 @@
 {
   "discovered": {},
   "initialized": true,
-  "pending_available": {
-    "https://www.falabella.com/falabella-cl/product/160502305/pack-nintendo-switch-2-256gb-zelda-40-aniversario-control-pro-negro": {
-      "count": 1,
-      "signature": "{\"status\":\"available\",\"price_clp\":994980,\"title\":\"Pack Switch 2 256GB Zelda 40 Aniversario + Control Pro Negro\"}",
-      "first_seen_at": "2026-11-25T00:05:53.900Z",
-      "last_seen_at": "2026-11-25T00:05:53.900Z"
-    }
-  },
+  "pending_available": {},
   "retailer_discovered": {
     "https://www.falabella.com/falabella-cl/product/159555264/consola-nintendo-switch-2-256gb-the-legend-of-zelda-40-aniversario-edicion-especial": {
       "found_at": "2026-11-15T15:20:53.900Z",
@@ -184,6 +177,16 @@
         "title": "Pack Switch 2 256GB Zelda 40 Aniv. + Control Pro + Ocarina of Time"
       },
       "last_changed_at": "2026-11-24T19:35:53.900Z"
+    },
+    "https://www.falabella.com/falabella-cl/product/160502305/pack-nintendo-switch-2-256gb-zelda-40-aniversario-control-pro-negro": {
+      "name": "Falabella · búsqueda",
+      "snapshot": {
+        "http": 200,
+        "status": "available",
+        "price_clp": 994980,
+        "title": "Pack Switch 2 256GB Zelda 40 Aniversario + Control Pro Negro"
+      },
+      "last_changed_at": "2026-11-25T00:10:53.900Z"
     }
   },
   "version": 1,
